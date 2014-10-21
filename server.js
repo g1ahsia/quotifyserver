@@ -1,0 +1,92 @@
+var express = require('express'),
+	  queries = require('./queries'),
+	  quotes = require('./quotes'),
+	  boards = require('./boards'),
+	  dailyQuotes = require('./dailyQuotes');
+	  collections = require('./collections'),
+	  quoters = require('./quoters'),
+	  authors = require('./authors'),
+	  images = require('./images'),
+	  dbOperations = require('./dbOps');
+ 
+var app = express();
+
+app.get('/queries/history/:query/:num', queries.history);
+app.get('/queries/quoter/:id/:num', queries.quoter);
+app.get('/quotes/:id', quotes.findById);
+// app.get('/quotes/newer/:id/:num', quotes.findNewer);
+// app.get('/quotes/older/:id/:num', quotes.findOlder);
+app.get('/quotes/quoter/:id/:num', quotes.findByQuoterId);
+app.get('/quotes/image/:id/:num', quotes.findRecentImagesByQuoterId);
+app.get('/quotes/search/:name/:num', quotes.search);
+app.get('/quotes/textSearch/:query/:num', quotes.textSearch);
+app.get('/quotes', quotes.findAll);
+app.get('/quotes/comment/:id', quotes.getCommentsById);
+app.post('/quotes', quotes.addQuote);
+app.put('/quotes/:id', quotes.updateQuote);
+app.put('/quotes/comment/:id', quotes.addComment);
+app.delete('/quotes/:id', quotes.deleteQuote);
+
+app.get('/collections/:id', collections.findById);
+app.get('/collections/search/:query/:num', collections.search);
+app.get('/collections/textSearch/:query/:num', collections.textSearch);
+app.get('/collections', collections.findAll);
+// app.get('/collections/owner/:id', collections.findByOwnerId);
+app.get('/collections/category/:category', collections.findByCategory);
+app.post('/collections', collections.addCollection);
+app.put('/collections/:id', collections.updateCollection);
+app.put('/collections/requote/:id', collections.requoteQuote);
+app.put('/collections/chooseCover/:id', collections.chooseCover);
+app.put('/collections/follow/:id', collections.followCollection);
+app.put('/collections/unfollow/:id', collections.unfollowCollection);
+app.delete('/collections/:id', collections.deleteCollection);
+
+app.get('/quoters/:id', quoters.findById);
+app.get('/quoters/email/:email', quoters.findByEmail);
+app.get('/quoters/search/:name/:num', quoters.search);
+app.get('/quoters/textSearch/:name/:num', quoters.textSearch);
+app.get('/quoters', quoters.findAll);
+app.post('/quoters/login/', quoters.loginQuoter);
+app.post('/quoters', quoters.addQuoter);
+app.put('/quoters/:id', quoters.updateQuoter);
+app.put('/quoters/like/:id', quoters.likeQuote);
+app.put('/quoters/unlike/:id', quoters.unlikeQuote);
+app.put('/quoters/favorite/:id', quoters.chooseFavorite);
+
+// app.put('/quoters/follow/:id', quoters.followQuoter);
+// app.put('/quoters/followQuoter/:id', quoters.followQuoter);
+app.delete('/quoters/:id', quoters.invalidateQuoter);
+
+app.get('/authors/:id', authors.findById);
+app.get('/authors', authors.findAll);
+
+app.get('/boards/:id', boards.findById);
+app.get('/boards', boards.findAll);
+app.get('/boards/quoter/:id/:num', boards.findLatest);
+app.get('/boards/quoter/newer/:qtid/:qid/:num', boards.findNewer);
+app.get('/boards/quoter/older/:qtid/:qid/:num', boards.findOlder);
+
+app.get('/dailyQuotes/:id', dailyQuotes.findById);
+app.get('/dailyQuotes', dailyQuotes.findAll);
+app.get('/dailyQuotes/latest/:num', dailyQuotes.findLatestPopular);
+
+app.get('/images/:id', images.findImageById);
+app.get('/images', images.findAll);
+app.get('/images/category/:category', images.findByCategory);
+app.get('/images/textSearch/:query/:num', images.textSearch);
+app.get('/images/metadata/:id', images.findById);
+app.post('/images', images.addImage);
+app.get('/thumbnails/:id', images.findThumbnailById);
+app.get('/avatars/:id', images.findAvatarById);
+app.get('/imageForm', images.imageForm);
+app.post('/upload', images.uploadImage);
+app.put('/images/:id', images.updateImageTags);
+app.get('/images/uploadRequest/:publicId', images.uploadToCloudinaryRequest);
+
+//app.post('/uploadImage', images.uploadImage);
+ 
+app.listen(3000);
+console.log('Listening on port 3000...');
+
+// Starting mongodb
+// mongod.exe --config d:\allen\mongodb\mongo.config
