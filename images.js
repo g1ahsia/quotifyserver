@@ -1,7 +1,6 @@
 var dbOperations = require('./dbOps');
 var Queue = require('./taskQueue.js');
 
-var multiparty = require('multiparty');
 var format = require('util').format;
 var crypto = require('crypto');
 
@@ -108,100 +107,6 @@ exports.findByCategory = function(req, res) {
   console.log('Retrieving images: ' + category);
   Queue.push(dbOperations.performDBOperation("findAll", "images", null, {category : category}, res));
   Queue.execute();
-};
-
-exports.uploadImage = function(req, res, next) {
-  // create a form to begin parsing
-  console.log("req is" + req);
-  var form = new multiparty.Form();
-  var image;
-  var title;
-  var imageFile;
-  var quote;
-  var type;
-
-  form.on('error', next);
-  form.on('close', function(){
-      // Copy files to destination
-      var source = fs.createReadStream('temp');
-      var dest = "";
-      // if (type == "textImage") {
-      //   dest = fs.createWriteStream('./textImages/' + image.filename);
-      //   source.pipe(dest);
-      //   Queue.push(dbOperations.performDBOperation("update", "quotes", image.filename, {$set : {textImageURL : image.filename}}, res));
-      // }
-      // else if (type == "image") {
-      if (type == "image") {
-        dest = fs.createWriteStream('./images/' + image.filename);
-        source.pipe(dest);
-        Queue.push(dbOperations.performDBOperation("update", "images", image.filename, {$set : {URL : image.filename}}, res));
-      }
-      else if (type == "thumbnail") {
-        dest = fs.createWriteStream('./thumbnails/' + image.filename);
-        source.pipe(dest);
-        Queue.push(dbOperations.performDBOperation("update", "images", image.filename, {$set : {URL : image.filename}}, res));
-      }
-
-      else if (type == "avatar") {
-        dest = fs.createWriteStream('./avatars/' + image.filename);
-        source.pipe(dest);
-        Queue.push(dbOperations.performDBOperation("update", "images", image.filename, {$set : {URL : image.filename}}, res));
-      }
-              // }
-      // add text image URL to the quote document
-      
-      Queue.execute();
-      source.on('end', function() { /* copied */ });
-      source.on('error', function(err) { /* error */ });
-      // res.send(format('\nuploaded %s (%d Kb) as %s'
-      // , image.filename
-      // , image.size / 1024 | 0
-      // , title));
-      Queue.execute();
-  console.log('end');
-   
-  });
-
-  // form.on('field', function(name, val) {
-  //   if (name !== 'quote') return;
-  //   quote = val;
-  //   var quoteObj = JSON.parse(quote);
-  //   quoteObj['textImageURL'] = title;
-    //Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, res));
-    //Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.collections[0], null, res));
-    
-  // });
-
-  // listen on field event for type
-  form.on('field', function(name, val){
-    if (name !== 'type') return;
-      type = val;
-      console.log("type " + type);
-  });
-
-  // listen on part event for image file
-  form.on('part', function(part) {
-    if (!part.filename) return;
-    if (part.name !== 'image') return part.resume();
-    image = {};
-    image.filename = part.filename;
-    image.type = part.type;
-    console.log("filename " + image.filename);
-    image.size = 0;
-    fs.open('temp', 'w');
-    imageFile = fs.createWriteStream('temp', {'flags': 'w'});
-    part.on('data', function(buf) {
-      image.size += buf.length;
-      // console.log(image.size);
-      imageFile.write(buf);
-      //console.log(JSON.stringify(part));
-    });
-  });
-
-
-  // parse the form
-  form.parse(req);
-
 };
 
 exports.uploadToCloudinaryRequest = function(req, res) {

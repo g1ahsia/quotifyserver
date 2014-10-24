@@ -6,7 +6,7 @@ var Server = mongo.Server,
 	Db = mongo.Db;
 	
 var server = new Server('localhost', 27017, {auto_reconnect: true});
-db = new Db('quotedb', server);
+db = new Db('quotedb', server, {safe:false});
 
 // Init logger
 var logger = new (winston.Logger)({
@@ -20,11 +20,12 @@ var logger = new (winston.Logger)({
 });
 
 // Setting log levels
-logger.log('info', 'Hello quotes');
-logger.log('warn', 'warning log');
-logger.log('error', 'error log');
+// logger.log('info', 'Hello quotes');
+// logger.log('warn', 'warning log');
+// logger.log('error', 'error log');
 
 db.open(function(err, db) {
+	console.log( "opening connnection to mongodb");
 	if(!err) {
 		console.log("Connected to database");
 		// dropping indexes
@@ -105,6 +106,9 @@ db.open(function(err, db) {
 		// 	}
 		// });
 	}
+	else {
+		console.log("Failed connecting to database");
+	}
 
 });
 
@@ -169,7 +173,7 @@ var findAllByAttrTask = function(colName, id, payload, res) {
 var findLatestTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : 1}).toArray(function(err, item) {
+			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
 				console.log("[findLatestTask] Finding latest of quoterID " + payload.quoterID);
 				if (err) {
 					logger.error(err);
@@ -679,16 +683,17 @@ var addQuoteToBoardTask = function(colName, id, payload, res){
 		db.collection(colName, function(err, collection) {
 			console.log("[addQuoteToBoard]: Adding quote " + JSON.stringify(quoteObj) + " to " + colName);
 			var collectionObj = results.shift();
-			// Insert to the quoter's own board
-			db.collection(colName, insertBoard(quoteObj.quoterID, quoteObj._id, quoteObj.creationDate, callback, res));
-			// If the collection is not followed by anyone, just return null
+			// If the collection is not followed by anyone, just insert to my own board
 			if (collectionObj.followedBy.length == 0) {
-				if (res) res.send("");
-				callback();
+				// Insert to the quoter's own board
+				db.collection(colName, insertBoard(quoteObj.quoterID, quoteObj._id, quoteObj.creationDate, callback, res));
 			}
 			else {
-				// Insert to all followers
-				for (var i = 0; i < collectionObj.followedBy.length; i++) {									console.log("[addQuoteToBoard]: Adding to " + collectionObj.followedBy[i] + " s board");
+				// Insert to the my own board
+				db.collection(colName, insertBoard(quoteObj.quoterID, quoteObj._id, quoteObj.creationDate, null, null));
+				// Insert to all followers' boards
+				for (var i = 0; i < collectionObj.followedBy.length; i++) {									
+					console.log("[addQuoteToBoard]: Adding to " + collectionObj.followedBy[i] + " s board");
 
 					if (i == collectionObj.followedBy.length - 1) {
 						db.collection(colName, insertBoard(collectionObj.followedBy[i], quoteObj._id, quoteObj.creationDate, callback, res));
@@ -696,7 +701,7 @@ var addQuoteToBoardTask = function(colName, id, payload, res){
 					else {
 						db.collection(colName, insertBoard(collectionObj.followedBy[i], quoteObj._id, quoteObj.creationDate, null, null));
 					}
-				}	
+				}
 			}
 		});
 	};

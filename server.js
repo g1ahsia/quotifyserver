@@ -1,18 +1,17 @@
 var express = require('express'),
-	  queries = require('./queries'),
+	  // queries = require('./queries'),
 	  quotes = require('./quotes'),
 	  boards = require('./boards'),
 	  dailyQuotes = require('./dailyQuotes');
 	  collections = require('./collections'),
 	  quoters = require('./quoters'),
 	  authors = require('./authors'),
-	  images = require('./images'),
-	  dbOperations = require('./dbOps');
+	  images = require('./images');
  
 var app = express();
 
-app.get('/queries/history/:query/:num', queries.history);
-app.get('/queries/quoter/:id/:num', queries.quoter);
+// app.get('/queries/history/:query/:num', queries.history);
+// app.get('/queries/quoter/:id/:num', queries.quoter);
 app.get('/quotes/:id', quotes.findById);
 // app.get('/quotes/newer/:id/:num', quotes.findNewer);
 // app.get('/quotes/older/:id/:num', quotes.findOlder);
@@ -79,14 +78,18 @@ app.post('/images', images.addImage);
 app.get('/thumbnails/:id', images.findThumbnailById);
 app.get('/avatars/:id', images.findAvatarById);
 app.get('/imageForm', images.imageForm);
-app.post('/upload', images.uploadImage);
 app.put('/images/:id', images.updateImageTags);
 app.get('/images/uploadRequest/:publicId', images.uploadToCloudinaryRequest);
 
 //app.post('/uploadImage', images.uploadImage);
  
-app.listen(3000);
-console.log('Listening on port 3000...');
+app.listen(3003);
+console.log('Listening on port 3003...');
+
+process.on('uncaughtException', function(err) {
+  console.log('Caught exception: ' + err);
+});
+
 
 // Starting mongodb
 // mongod.exe --config d:\allen\mongodb\mongo.config
