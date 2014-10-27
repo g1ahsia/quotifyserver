@@ -230,8 +230,9 @@ var findLatestPopularTask = function(colName, id, payload, res) {
 
 var findNewerTask = function(colName, id, payload, res) {
 	return function(callback) {
+		var quoterID = payload.quoterID;
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoteID' : {"$gt" : new BSON.ObjectID(id)}, 'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
+			collection.find({'quoterID' : quoterID,'quoteID' : {"$gt" : new BSON.ObjectID(id)}, 'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
 				console.log("[findNewerTask] Finding newer");
 				if (err) {
 					logger.error(err);
@@ -249,8 +250,9 @@ var findNewerTask = function(colName, id, payload, res) {
 
 var findOlderTask = function(colName, id, payload, res) {
 	return function(callback) {
+		var quoterID = payload.quoterID;
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoteID' : {"$lt" : new BSON.ObjectID(id)}}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
+			collection.find({'quoterID' : quoterID, 'quoteID' : {"$lt" : new BSON.ObjectID(id)}}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
 				console.log("[findOlderTask] Finding older");
 				if (err) {
 					logger.error(err);
