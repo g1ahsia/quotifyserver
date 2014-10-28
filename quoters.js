@@ -96,7 +96,7 @@ exports.updateQuoter = function(req, res) {
 
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
-		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set:{name: quoterObj.name, password: quoterObj.password, email: quoterObj.email, favoriteQuote: quoterObj.favoriteQuote}}, res));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set:quoterObj}, res));
 		Queue.execute();
 	});
 }
