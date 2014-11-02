@@ -23,7 +23,8 @@ exports.findNewer = function(req, res) {
 	var qtid = req.params.qtid;
 	var qid = req.params.qid;
 	var num = req.params.num;
-	Queue.push(dbOperations.performDBOperation("findNewer", "boards", qid, {'quoterID' : qtid, 'num' : num}, res));
+	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
+	Queue.push(dbOperations.performDBOperation("findNewer", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
 	Queue.execute();
 };
 
@@ -31,6 +32,7 @@ exports.findOlder = function(req, res) {
 	var qtid = req.params.qtid;
 	var qid = req.params.qid;
 	var num = req.params.num;
-	Queue.push(dbOperations.performDBOperation("findOlder", "boards", qid, {'quoterID' : qtid, 'num' : num}, res));
+	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
+	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
 	Queue.execute();
 };

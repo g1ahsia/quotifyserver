@@ -40,7 +40,7 @@ exports.search = function(req, res) {
 };
 
 exports.textSearch = function(req, res) {
-	var query = req.params.query;
+	var query = req.params.query;	
 	var num = req.params.num;
 	console.log('Retrieving collection: ' + query);
 	Queue.push(dbOperations.performDBSearch("textSearch", "collections", {$text: {$search : query}}, {textScore: {$meta: "textScore"}}, {sort: {textScore: {$meta: "textScore"}}}, parseInt(num), res));
@@ -82,22 +82,24 @@ exports.updateCollection = function(req, res) {
 	});
 }
 
-exports.requoteQuote = function(req, res) {
-	var id = req.params.id;
-	var requestString = '';
+// exports.requoteQuote = function(req, res) {
+// 	var id = req.params.id;
+// 	var requestString = '';
 
-	req.on("data",function(data){	
-		requestString += data.toString('utf8');
-	});
-	req.on('end', function() {
-		var quoteObj = JSON.parse(requestString);
-		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$addToSet : {quotes : quoteObj._id}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : id}}, res));
-		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 2}, res));
-		Queue.execute();
-	});
-}
+// 	req.on("data",function(data){	
+// 		requestString += data.toString('utf8');
+// 	});
+// 	req.on('end', function() {
+// 		var quoteObj = JSON.parse(requestString);
+// 		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$addToSet : {quotes : quoteObj._id}}, null));
+// 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : id}}, res));
+// 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
+// 		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 2}, null));
+// 		// Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : quoteObj._id, 'quoterID' : id}, null));
+// 		// Queue.push(dbOperations.performDBOperation("addQuoteToMyBoard", "boards", id, quoteObj, res));
+// 		Queue.execute();
+// 	});
+// }
 
 exports.chooseCover = function(req, res) {
 	var id = req.params.id;

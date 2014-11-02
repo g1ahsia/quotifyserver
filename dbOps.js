@@ -170,6 +170,26 @@ var findAllByAttrTask = function(colName, id, payload, res) {
 	};
 }
 
+var findOneByAttrTask = function(colName, id, payload, res) {
+	console.log("[findOneByAttrTask] : Finding " + JSON.stringify(payload) + " in " + colName);
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.findOne(payload, function(err, item) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('Successfully found record: ' + JSON.stringify(item));
+					results = []; //nullify the results array
+					results.push(item);
+					if (res) res.send(item);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var findLatestTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
@@ -228,11 +248,35 @@ var findLatestPopularTask = function(colName, id, payload, res) {
 	};
 }
 
+var findBoardTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			console.log("[findBoardTask] : Finding " + JSON.stringify(payload) + " in " + colName);
+			collection.findOne({'quoterID' : payload.quoterID, 'quoteID' : new BSON.ObjectID(payload.quoteID)}, function(err, item) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('Successfully found record: ' + JSON.stringify(item));
+					results = []; //nullify the results array
+					results.push(item);
+					if (res) res.send(item);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var findNewerTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var quoterID = payload.quoterID;
+		var boardObj = results.shift();
+		if (boardObj == null) {
+			res.send(null);
+			return;
+		}
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : quoterID,'quoteID' : {"$gt" : new BSON.ObjectID(id)}, 'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
+			collection.find({'quoterID' : payload.quoterID, '_id' : {"$gt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
 				console.log("[findNewerTask] Finding newer");
 				if (err) {
 					logger.error(err);
@@ -250,31 +294,14 @@ var findNewerTask = function(colName, id, payload, res) {
 
 var findOlderTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var quoterID = payload.quoterID;
+		var boardObj = results.shift();
+		if (boardObj == null) {
+			res.send(null);
+			return;
+		}
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : quoterID, 'quoteID' : {"$lt" : new BSON.ObjectID(id)}}).limit(parseInt(payload.num)).sort({'quoteID' : -1}).toArray(function(err, item) {
+			collection.find({'quoterID' : payload.quoterID, '_id' : {"$lt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
 				console.log("[findOlderTask] Finding older");
-				if (err) {
-					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					console.log('Successfully found record: ' + JSON.stringify(item));
-					results = []; //nullify the results array
-					results.push(item);
-					if (res) res.send(item);
-					callback();
-				}
-			});
-		});
-	};
-}
-
-var findOneByAttrTask = function(colName, id, payload, res) {
-	console.log("[findOneByAttrTask] : Finding " + JSON.stringify(payload) + " in " + colName);
-	return function(callback) {
-		db.collection(colName, function(err, collection) {
-			collection.findOne(payload, function(err, item) {
-				console.log("[findOneByAttrTask] Finding one");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -679,7 +706,31 @@ var removeQuoteFromDailyQuoteTask = function(colName, id, payload, res){
 	};
 }
 
-var addQuoteToBoardTask = function(colName, id, payload, res){
+var addQuoteToMyBoardTask = function(colName, id, payload, res){
+	return function(callback) {
+		var boardObj = results.shift();
+		if (boardObj == null) {
+			db.collection(colName, function(err, collection) {
+				console.log("[addQuoteToMyBoardTask] adding: ", JSON.stringify(payload), colName);
+				collection.insert({'quoterID' : id, 'creationDate' : payload.creationDate, 'quoteID' : new BSON.ObjectID(payload._id)}, {safe:true}, function(err, result) {
+					if (err) {
+						logger.error(err);
+						if (res) res.send({'error':'An error has occurred'});
+					} else {
+						if (res) res.send(result[0]);
+						if (callback) callback();
+					}
+				});
+			});
+		}
+		else {
+			if (res) res.send("Done");
+			if (callback) callback();
+		}
+	};
+}
+
+var addQuoteToBoardsTask = function(colName, id, payload, res){
 	return function(callback) {
 		var quoteObj = payload;
 		db.collection(colName, function(err, collection) {
@@ -688,20 +739,20 @@ var addQuoteToBoardTask = function(colName, id, payload, res){
 			// If the collection is not followed by anyone, just insert to my own board
 			if (collectionObj.followedBy.length == 0) {
 				// Insert to the quoter's own board
-				db.collection(colName, insertBoard(quoteObj.quoterID, quoteObj._id, quoteObj.creationDate, callback, res));
+				db.collection(colName, insertBoard(quoteObj.quoterID, new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, callback, res));
 			}
 			else {
 				// Insert to the my own board
-				db.collection(colName, insertBoard(quoteObj.quoterID, quoteObj._id, quoteObj.creationDate, null, null));
+				db.collection(colName, insertBoard(quoteObj.quoterID, new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, null, null));
 				// Insert to all followers' boards
 				for (var i = 0; i < collectionObj.followedBy.length; i++) {									
-					console.log("[addQuoteToBoard]: Adding to " + collectionObj.followedBy[i] + " s board");
+					console.log("[addQuoteToBoards]: Adding to " + collectionObj.followedBy[i] + " s board");
 
 					if (i == collectionObj.followedBy.length - 1) {
-						db.collection(colName, insertBoard(collectionObj.followedBy[i], quoteObj._id, quoteObj.creationDate, callback, res));
+						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, callback, res));
 					}
 					else {
-						db.collection(colName, insertBoard(collectionObj.followedBy[i], quoteObj._id, quoteObj.creationDate, null, null));
+						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, null, null));
 					}
 				}
 			}
@@ -709,7 +760,7 @@ var addQuoteToBoardTask = function(colName, id, payload, res){
 	};
 }
 
-// helper
+// helper for adding boards of multiple followers
 
 var insertBoard = function(qtid, qid, date, callback, res) {
 		return function(err, boards) {
@@ -809,11 +860,13 @@ var actions = {	"update" : updateTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
 				"addQuoteToAuthor" : addQuoteToAuthorTask,
 				"addQuoteToDailyQuote" : addQuoteToDailyQuoteTask,
+				"addQuoteToMyBoard" : addQuoteToMyBoardTask,
 				"removeQuoteFromDailyQuote" : removeQuoteFromDailyQuoteTask,
-				"addQuoteToBoard" : addQuoteToBoardTask,
+				"addQuoteToBoards" : addQuoteToBoardsTask,
 			    "followCollection" : followCollectionTask,
 			    "unfollowCollection" : unfollowCollectionTask,
 			    "findLatest" : findLatestTask,
+			    "findBoard" : findBoardTask,
 			    "findNewer" : findNewerTask,
 			    "findOlder" : findOlderTask,
 			    "findLatestPopular" : findLatestPopularTask,

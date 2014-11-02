@@ -56,6 +56,7 @@ exports.textSearch = function(req, res) {
 
 
 exports.findAll = function(req, res) {
+	console.log("finding all quotes");
 	Queue.push(dbOperations.performDBOperation("findAll", "quotes", null, null, res));
 	Queue.execute();
 };
@@ -86,7 +87,7 @@ exports.addQuote = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("addQuoteToAuthor", "authors", null, quoteObj, null));
 		// Add quote to boards of quoters who follow the collection
 		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToBoard", "boards", null, quoteObj, res));
+		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, res));
 		Queue.execute();
 	});
 }

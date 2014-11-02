@@ -34,7 +34,7 @@ app.get('/collections', collections.findAll);
 app.get('/collections/category/:category', collections.findByCategory);
 app.post('/collections', collections.addCollection);
 app.put('/collections/:id', collections.updateCollection);
-app.put('/collections/requote/:id', collections.requoteQuote);
+// app.put('/collections/requote/:id', collections.requoteQuote);
 app.put('/collections/chooseCover/:id', collections.chooseCover);
 app.put('/collections/follow/:id', collections.followCollection);
 app.put('/collections/unfollow/:id', collections.unfollowCollection);
@@ -50,6 +50,7 @@ app.post('/quoters', quoters.addQuoter);
 app.put('/quoters/:id', quoters.updateQuoter);
 app.put('/quoters/like/:id', quoters.likeQuote);
 app.put('/quoters/unlike/:id', quoters.unlikeQuote);
+app.put('/quoters/requote/:id', quoters.requoteQuote);
 app.put('/quoters/favorite/:id', quoters.chooseFavorite);
 
 // app.put('/quoters/follow/:id', quoters.followQuoter);
@@ -79,12 +80,12 @@ app.get('/thumbnails/:id', images.findThumbnailById);
 app.get('/avatars/:id', images.findAvatarById);
 app.get('/imageForm', images.imageForm);
 app.put('/images/:id', images.updateImageTags);
-app.get('/images/uploadRequest/:publicId', images.uploadToCloudinaryRequest);
+app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
 //app.post('/uploadImage', images.uploadImage);
  
-app.listen(3003);
-console.log('Listening on port 3003...');
+app.listen(8080);
+console.log('Listening on port 8080...');
 
 process.on('uncaughtException', function(err) {
   console.log('Caught exception: ' + err);

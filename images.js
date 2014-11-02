@@ -109,7 +109,7 @@ exports.findByCategory = function(req, res) {
   Queue.execute();
 };
 
-exports.uploadToCloudinaryRequest = function(req, res) {
+exports.cloudinaryRequest = function(req, res) {
   var publicId = req.params.publicId;
   var now = new Date().getTime();
   var apiKey = "467978722165766";
@@ -117,7 +117,6 @@ exports.uploadToCloudinaryRequest = function(req, res) {
   var shasum = crypto.createHash('sha1');
   shasum.update("public_id=" + publicId + "&timestamp=" + now + secretKey);
   var signature = shasum.digest('hex');
-  console.log(signature);
 
   var responseObj = {};
   responseObj["signature"] = signature;
