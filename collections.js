@@ -60,6 +60,7 @@ exports.addCollection = function(req, res) {
 		collectionObj["quotes"] = [];
 		collectionObj["followedBy"] = [];
 		collectionObj["cover"] = "";
+		collectionObj["creationDate"] = new Date();
 		// Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, res));
 		// collectionObj["quotes"] = [];
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));

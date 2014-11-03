@@ -232,7 +232,7 @@ var findDistinctTask = function(colName, id, payload, res) {
 var findLatestPopularTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.find().limit(parseInt(payload.num)).sort({'_id' : -1, 'popularity' : -1}).toArray(function(err, item) {
+			collection.find().limit(parseInt(payload.num)).sort({'popularity' : -1, '_id' : -1}).toArray(function(err, item) {
 				console.log("[findLatestPopularTask] Finding latest popular");
 				if (err) {
 					logger.error(err);

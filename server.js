@@ -13,8 +13,6 @@ var app = express();
 // app.get('/queries/history/:query/:num', queries.history);
 // app.get('/queries/quoter/:id/:num', queries.quoter);
 app.get('/quotes/:id', quotes.findById);
-// app.get('/quotes/newer/:id/:num', quotes.findNewer);
-// app.get('/quotes/older/:id/:num', quotes.findOlder);
 app.get('/quotes/quoter/:id/:num', quotes.findByQuoterId);
 app.get('/quotes/image/:id/:num', quotes.findRecentImagesByQuoterId);
 app.get('/quotes/search/:name/:num', quotes.search);

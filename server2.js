@@ -1,15 +1,22 @@
-var express = require('express')
+var express = require('express').
+	quotes = require('./quotes');
 var app = express()
 
-app.get('/', function (req, res) {
-  res.send('Hello World!')
-})
+app.get('/quotes/:id', quotes.findById);
+app.get('/quotes/quoter/:id/:num', quotes.findByQuoterId);
+app.get('/quotes/image/:id/:num', quotes.findRecentImagesByQuoterId);
+app.get('/quotes/search/:name/:num', quotes.search);
+app.get('/quotes/textSearch/:query/:num', quotes.textSearch);
+app.get('/quotes', quotes.findAll);
+app.get('/quotes/comment/:id', quotes.getCommentsById);
+app.post('/quotes', quotes.addQuote);
+app.put('/quotes/:id', quotes.updateQuote);
+app.put('/quotes/comment/:id', quotes.addComment);
+app.delete('/quotes/:id', quotes.deleteQuote);
 
-var server = app.listen(8080, function () {
+app.listen(8080);
+console.log('Listening on port 8080...');
 
-  var host = server.address().address
-  var port = server.address().port
-
-  console.log('Example app listening at http://%s:%s', host, port)
-
-})
+process.on('uncaughtException', function(err) {
+  console.log('Caught exception: ' + err);
+});

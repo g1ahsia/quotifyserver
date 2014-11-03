@@ -64,6 +64,7 @@ exports.addQuoter = function(req, res) {
 		quoterObj["subscribingTags"] = [];
 		quoterObj["likingQuotes"] = [];
 		quoterObj["isValid"] = 1;
+		quoterObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("insertQuoter", "quoters", null, quoterObj, res));
 		Queue.execute();
 	});
@@ -110,6 +111,7 @@ exports.likeQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		quoteObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$addToSet : {likingQuotes : quoteObj._id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {likedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
@@ -130,6 +132,7 @@ exports.unlikeQuote = function(req, res) {
 
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		quoteObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$pull : {likingQuotes : quoteObj._id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$pull : {likedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
@@ -147,6 +150,7 @@ exports.requoteQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		quoteObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collectionID, {$addToSet : {quotes : quoteObj._id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : quoteObj.collectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));

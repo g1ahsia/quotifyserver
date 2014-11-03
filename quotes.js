@@ -80,6 +80,7 @@ exports.addQuote = function(req, res) {
 		var quoteObj = JSON.parse(requestString);
 		quoteObj["likedBy"] = [];
 		quoteObj["comments"] = [];
+		quoteObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.collections[0], null, null));
 		// Add quote to the author collection
@@ -138,6 +139,7 @@ exports.addComment = function(req, res) {
 
 	req.on('end', function() {
 		var commentObj = JSON.parse(requestString);
+		commentObj["creationDate"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {comments : commentObj}}, res));
 		Queue.execute();
 	});
