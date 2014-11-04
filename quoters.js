@@ -5,18 +5,21 @@ var Queue = require('./taskQueue.js');
 exports.findById = function(req, res) {
 	var id = req.params.id;
 	console.log('Retrieving quoter: ' + id);
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findOne", "quoters", id, null, res));
 	Queue.execute();
 };
 
 exports.findByEmail = function(req, res) {
 	var email = req.params.email;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {'email' : email}, res));
 	Queue.execute();
 };
 
 // Find all collections
 exports.findAll = function(req, res) {
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findAll", "quoters", null, null, res));
 	Queue.execute();
 };

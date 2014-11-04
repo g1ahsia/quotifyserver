@@ -22,6 +22,6 @@
   },
   "subdomain": "quotifyServer",
   "engines": {
-    "node": "32"
+    "node": "0.10.31"
   }
 }

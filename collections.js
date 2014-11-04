@@ -5,6 +5,7 @@ var Queue = require('./taskQueue.js');
 exports.findById = function(req, res) {
 	var id = req.params.id;
 	console.log('Retrieving collection by ID: ' + id);
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, res));
 	Queue.execute();
 };

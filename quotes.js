@@ -4,6 +4,7 @@ var Queue = require('./taskQueue.js');
 
 exports.findById = function(req, res) {
 	var id = req.params.id;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findOne", "quotes", id, null, res));
 	Queue.execute();
 };
@@ -26,6 +27,7 @@ exports.findById = function(req, res) {
 exports.findByQuoterId = function(req, res) {
 	var id = req.params.id;
 	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findLatest", "quotes", null, {'quoterID' : id, 'num' : num}, res));
 	Queue.execute();
 };
@@ -57,6 +59,7 @@ exports.textSearch = function(req, res) {
 
 exports.findAll = function(req, res) {
 	console.log("finding all quotes");
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findAll", "quotes", null, null, res));
 	Queue.execute();
 };
