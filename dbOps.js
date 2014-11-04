@@ -171,9 +171,9 @@ var findAllByAttrTask = function(colName, id, payload, res) {
 }
 
 var findOneByAttrTask = function(colName, id, payload, res) {
-	console.log("[findOneByAttrTask] : Finding " + JSON.stringify(payload) + " in " + colName);
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
+			console.log("[findOneByAttrTask] : Finding " + JSON.stringify(payload) + " in " + colName);
 			collection.findOne(payload, function(err, item) {
 				if (err) {
 					logger.error(err);

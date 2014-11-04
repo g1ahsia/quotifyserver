@@ -4,7 +4,7 @@ var Queue = require('./taskQueue.js');
 // Find collection by ID
 exports.findById = function(req, res) {
 	var id = req.params.id;
-	console.log('Retrieving collection: ' + id);
+	console.log('Retrieving collection by ID: ' + id);
 	Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, res));
 	Queue.execute();
 };
@@ -15,17 +15,9 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 }
 
-// Find collections by quoter ID
-// exports.findByOwnerId = function(req, res) {
-// 	var id = req.params.id;
-// 	console.log('Retrieving collection: ' + id);
-// 	Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {ownerID : id}, res));
-// 	Queue.execute();
-// };
-
 exports.findByCategory = function(req, res) {
 	var category = req.params.category;
-	console.log('Retrieving collection: ' + category);
+	console.log('Retrieving collection by Category: ' + category);
 	Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {category : category}, res));
 	Queue.execute();
 };
@@ -34,7 +26,7 @@ exports.search = function(req, res) {
 	var query = req.params.query;
 	var regEx = new RegExp("^" + query, "i");
 	var num = req.params.num;
-	console.log('Retrieving collection: ' + query);
+	console.log('Searching: ' + query);
 	Queue.push(dbOperations.performDBSearch("indexSearch", "collections", {title : regEx}, {isPublic : 0}, {_id : -1}, parseInt(num), res));
 	Queue.execute();
 };
@@ -42,7 +34,7 @@ exports.search = function(req, res) {
 exports.textSearch = function(req, res) {
 	var query = req.params.query;	
 	var num = req.params.num;
-	console.log('Retrieving collection: ' + query);
+	console.log('Text Searching: ' + query);
 	Queue.push(dbOperations.performDBSearch("textSearch", "collections", {$text: {$search : query}}, {textScore: {$meta: "textScore"}}, {sort: {textScore: {$meta: "textScore"}}}, parseInt(num), res));
 	Queue.execute();
 };

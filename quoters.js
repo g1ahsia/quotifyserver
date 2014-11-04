@@ -38,11 +38,7 @@ exports.search = function(req, res) {
 
 exports.textSearch = function(req, res) {
 	var name = req.params.name;
-	// var name2 = req.params.name2;
 	var num = req.params.num;
-	// var fullName1 = "\"" + name1 + " " + name2 + "\"";
-	// var fullName2 = "\"" + name2 + " " + name1 + "\"";
-	// console.log('Retrieving collection: ' + fullName1 + " " + fullName2);
 	Queue.push(dbOperations.performDBSearch("textSearch", "quoters", {$text: {$search : name}}, {textScore: {$meta: "textScore"}}, {sort: {textScore: {$meta: "textScore"}}}, parseInt(num), res));
 	Queue.execute();
 };

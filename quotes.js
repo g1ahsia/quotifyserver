@@ -61,14 +61,6 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
-// Find quotes by collection ID
-// exports.findByCollectionId = function(req, res) {
-// 	var id = req.params.id;
-// 	console.log('Retrieving collection: ' + id);
-// 	Queue.push(dbOperations.performDBOperation("findAll", "quotes", null, {quoterID : id}, res));
-// 	Queue.execute();
-// };
-
 exports.addQuote = function(req, res) {
 	//var quote = req.body;
 	var requestString = '';
