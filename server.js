@@ -80,7 +80,7 @@ app.get('/imageForm', images.imageForm);
 app.put('/images/:id', images.updateImageTags);
 app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
-app.use(express.static(__dirname));
+// app.use(express.static(__dirname));
 
 //app.post('/uploadImage', images.uploadImage);
  

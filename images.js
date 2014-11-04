@@ -5,32 +5,44 @@ var querystring = require('querystring');
 var format = require('util').format;
 var crypto = require('crypto');
 
+// For manual image upload
+// http://localhost:8080/imageform
+// http://localhost:8080/images/:id
+
 exports.imageForm = function(req, res) {
-  res.send('<form method="post" action="upload" enctype="multipart/form-data">'
-    + '<p>Title: <input type="text" name="title" /></p>'
-    + '<p>Quote: <input type="text" name="quote" /></p>'
-    + '<p>Author: <input type="text" name="author" /></p>'
-    + '<p>Source: <input type="text" name="source" /></p>'
-    + '<p>Description: <input type="text" name="description" /></p>'
-    + '<p>Collection: <input type="text" name="collection" /></p>'
-    + '<p>Image: <input type="file" name="image" /></p>'
-    + '<p><input type="submit" value="Upload" /></p>'
-    + '</form>');
+  res.send('<form name="input" action="http://localhost:8080/images/insert" method="post">'
++ 'Choose Category:<br>'
++ '<input type="radio" name="category" value="Art">Art<br>'
++ '<input type="radio" name="category" value="Light and Shadow">Light and Shadow<br>'
++ '<input type="radio" name="category" value="Texture & Pattern">Texture & Pattern<br>'
++ '<input type="radio" name="category" value="Nature">Nature<br>'
++ '<input type="radio" name="category" value="Sea and Sky">Sea and Sky<br>'
++ '<input type="radio" name="category" value="People">People<br>'
++ '<input type="radio" name="category" value="Flowers">Flowers<br>'
++ '<input type="radio" name="category" value="Cities & Landscapes">Cities & Landscapes<br>'
++ '<input type="radio" name="category" value="Animals">Animals<br>'
++ '<input type="radio" name="category" value="Other">Other<br>'
++ 'Tags: <input type="text" name="tags" size="70"><br>'
++ 'Author: <input type="text" name="author" size="67"><br>'
++ 'Reference URL: <input type="text" name="reference" size="57"><br>'
++ '<input type="submit" value="Submit">'
++ '</form>');
 };
 
 var fs = require('fs');
 
 exports.findImageById = function(req, res) {
   var id = req.params.id;
-  fs.readFile('./images/' + id, function(err, data) {
-    if (err) {
-      res.send("no such image");
-      return;
-    } 
-    res.writeHead(200, {'Content-Type': 'image/png'});
-    console.log("requesting image");
-    res.end(data);
-  });
+  // fs.readFile('http://res.cloudinary.com/quotifyapp-com/image/upload/c_scale,h_768/' + id, function(err, data) {
+  //   if (err) {
+  //     res.send("no such image");
+  //     return;
+  //   } 
+  //   res.writeHead(200, {'Content-Type': 'image/png'});
+    console.log('<a href="http://res.cloudinary.com/quotifyapp-com/image/upload/c_scale,h_768/' + id + '>image here</a>');
+    // res.end('<a href="http://res.cloudinary.com/quotifyapp-com/image/upload/c_scale,h_768/' + id + '>" 圖片在這</a>');
+    res.end('<a href="http://res.cloudinary.com/quotifyapp-com/image/upload/c_scale,h_768/' + id + '">image here</a>');
+
 };
 
 exports.findThumbnailById = function(req, res) {
@@ -93,10 +105,10 @@ exports.addImage = function(req, res) {
 exports.insertImageManually = function(req, res) {
   //var collection = req.body;
   req.on("data",function(data){
-    console.log("rawdata",data);
     var imageString=data.toString('utf8');
-    console.log("json to be added:" + querystring.parse(imageString));
     var imageObj = querystring.parse(imageString);
+    console.log("json to be added:" + JSON.stringify(imageObj));
+    imageObj["tags"] = imageObj["tags"].split(", ");
     Queue.push(dbOperations.performDBOperation("insert", "images", null, imageObj, res));
     Queue.execute();
   });
