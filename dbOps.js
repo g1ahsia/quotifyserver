@@ -39,9 +39,9 @@ db.open(function(err, db) {
 		// });
 
 		// creating indexes
-		db.collection('quoters', function(err, collection) {
+		db.collection('quotes', function(err, collection) {
 			collection.indexes(function(err, indexes) {
-				console.log("Quoters indexes: " + JSON.stringify(indexes));
+				console.log("Quotes indexes: " + JSON.stringify(indexes));
 			});
 		});
 		console.log('creating indexes');

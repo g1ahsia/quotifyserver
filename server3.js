@@ -1,11 +1,15 @@
-var express = require('express')
-var app = express()
+var express = require('express'),
+	quotes = require('./quotes');
+var app = express();
 
 app.get('/', function (req, res) {
   res.send('Hello World!')
 })
 
-var server = app.listen(3003, function () {
+app.get('/quotes/:id', quotes.findById);
+app.get('/quotes', quotes.findAll);
+
+var server = app.listen(8080, function () {
 
   var host = server.address().address
   var port = server.address().port

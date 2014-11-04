@@ -36,3 +36,19 @@ exports.findOlder = function(req, res) {
 	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
 	Queue.execute();
 };
+
+exports.addQuote = function(req, res) {
+	var qtid = req.params.qtid;
+	var requestString = '';
+
+	req.on("data",function(data){	
+		requestString += data.toString('utf8');
+	});
+	req.on('end', function() {
+		var quoteObj = JSON.parse(requestString);
+		quoteObj["creationDate"] = new Date();
+		Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : quoteObj._id, 'quoterID' : qtid}, null));
+		Queue.push(dbOperations.performDBOperation("addQuoteToMyBoard", "boards", qtid, quoteObj, res));
+		Queue.execute();
+	});
+};

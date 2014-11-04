@@ -1,6 +1,6 @@
 {
   "name": "quotifyserver",
-  "version": "1.0.0",
+  "version": "1.0.0-2",
   "description": "quotify web services",
   "main": "server.js",
   "scripts": {
@@ -19,5 +19,9 @@
   "homepage": "https://github.com/g1ahsia/quotifyserver",
   "dependencies": {
     "express": "^4.10.0"
+  },
+  "subdomain": "quotifyServer",
+  "engines": {
+    "node": "32"
   }
 }

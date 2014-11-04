@@ -1,5 +1,6 @@
 var dbOperations = require('./dbOps');
 var Queue = require('./taskQueue.js');
+var querystring = require('querystring');
 
 var format = require('util').format;
 var crypto = require('crypto');
@@ -84,6 +85,18 @@ exports.addImage = function(req, res) {
     //var collection = '{"collection":"this is collection 123456","author":"Dada","description":"this is a new desc"}';
     console.log("json to be added:" + imageString);
     var imageObj = JSON.parse(imageString);
+    Queue.push(dbOperations.performDBOperation("insert", "images", null, imageObj, res));
+    Queue.execute();
+  });
+}
+
+exports.insertImageManually = function(req, res) {
+  //var collection = req.body;
+  req.on("data",function(data){
+    console.log("rawdata",data);
+    var imageString=data.toString('utf8');
+    console.log("json to be added:" + querystring.parse(imageString));
+    var imageObj = querystring.parse(imageString);
     Queue.push(dbOperations.performDBOperation("insert", "images", null, imageObj, res));
     Queue.execute();
   });

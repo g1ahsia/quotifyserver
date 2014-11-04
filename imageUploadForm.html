@@ -1,0 +1,26 @@
+<html>
+<head><title>test</title></head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+<script>
+var processform=function() {
+	var imageObj = {};
+	imageObj["category"] = document.getElementById("category").value;
+	imageObj["tags"] = document.getElementById("tags").value;
+	imageObj["author"] = document.getElementById("author").value;
+
+	$.post("http://localhost:8080/images/insert", {"tags":["dada"],"author":"Allen Hsiao","category":"Light and Shadow"});
+}
+</script>
+<body>
+
+<p><label for="category">Category:</label>
+<input type="text" name="category" id="category"></p>
+
+<p><label for="tags">Tags:</label>
+<input type="text" name="tags" id="tags"></p>
+
+<p><label for="author">Author:</label>
+<input type="text" name="author" id="author"></p>
+
+<button onclick="processform()">xx</button>
+</body></html>
