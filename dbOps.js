@@ -662,6 +662,25 @@ var addQuoteToDailyQuoteTask = function(colName, id, payload, res){
 	};
 }
 
+var requoteTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.update({'_id': new BSON.ObjectID(id)}, {$addToSet : {quotes : new BSON.ObjectID(payload._id)}}, {safe:true}, function(err, result) {
+				console.log("[requoteTask] Updating", id, JSON.stringify(payload), " in ", colName);
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result[0] + ' document(s) updated with id ' + id);
+
+					if (res) res.send({'OK':'Successfully updated record'});
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var removeQuoteFromDailyQuoteTask = function(colName, id, payload, res){
 	return function(callback) {
 		// var quoteObj = payload;
@@ -861,6 +880,7 @@ var actions = {	"update" : updateTask,
 				"addQuoteToAuthor" : addQuoteToAuthorTask,
 				"addQuoteToDailyQuote" : addQuoteToDailyQuoteTask,
 				"addQuoteToMyBoard" : addQuoteToMyBoardTask,
+				"requote" : requoteTask,
 				"removeQuoteFromDailyQuote" : removeQuoteFromDailyQuoteTask,
 				"addQuoteToBoards" : addQuoteToBoardsTask,
 			    "followCollection" : followCollectionTask,

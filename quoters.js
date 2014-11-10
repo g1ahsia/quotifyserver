@@ -150,7 +150,7 @@ exports.requoteQuote = function(req, res) {
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
 		quoteObj["creationDate"] = new Date();
-		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collectionID, {$addToSet : {quotes : quoteObj._id}}, null));
+		Queue.push(dbOperations.performDBOperation("requote", "collections", quoteObj.collectionID, quoteObj, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : quoteObj.collectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 2}, null));

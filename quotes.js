@@ -91,15 +91,22 @@ exports.addQuote = function(req, res) {
 exports.updateQuote = function(req, res) {
 	var id = req.params.id;
 	var requestString = '';
-
 	req.on("data",function(data){	
 		requestString += data.toString('utf8');
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
-		quoteObj["likedBy"] = [];
-		quoteObj["comments"] = [];
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set:{quote: quoteObj.quote, authorID: quoteObj.authorID, description: quoteObj.description, imageID: quoteObj.imageID}}, null));
+		console.log("originalCollectionID", quoteObj.originalCollectionID);
+		console.log("newCollectionID", quoteObj.newCollectionID);
+		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set:{quote : quoteObj.quote, 
+																				  author : quoteObj.author, 
+																				  description : quoteObj.description, 
+																				  source : quoteObj.source,
+																				  imageID : quoteObj.imageID,
+																				  quoteAttributes : quoteObj.quoteAttributes,
+																				  authorAttributes : quoteObj.authorAttributes,
+																				  imageAttributes : quoteObj.imageAttributes
+																				}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.originalCollectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {collections : quoteObj.newCollectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.originalCollectionID, {$pull : {quotes : id}}, null));
