@@ -582,6 +582,27 @@ var addQuoteToCollectionTask = function(colName, id, payload, res){
 	};
 }
 
+var pullQuoteFromCollectionTask = function(colName, id, payload, res){
+	return function(callback) {
+		var quoteObj = payload;
+		db.collection(colName, function(err, collection) {
+			collection.update({'_id': new BSON.ObjectID(id)}, {$pull : {quotes : new BSON.ObjectID(quoteObj._id)}}, {safe:true}, function(err, result) {
+				console.log("[pullQuoteFromCollectionTask]");
+				if (err) {
+					logger.error(err);
+					console.log('Error updating collection ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(quoteObj));
+					results.push(quoteObj);
+					if (res) res.send(result[0]);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var addQuoteToAuthorTask = function(colName, id, payload, res){
 	return function(callback) {
 		var quoteObj = payload;
@@ -749,6 +770,24 @@ var addQuoteToMyBoardTask = function(colName, id, payload, res){
 	};
 }
 
+var removeQuoteFromMyBoardTask = function(colName, id, payload, res){
+	return function(callback) {
+		var quoteObj = payload;
+		db.collection(colName, function(err, collection) {
+			console.log("[removeQuoteFromMyBoardTask] adding: ", JSON.stringify(quoteObj), colName);
+			collection.remove({'quoterID' : id, 'quoteID' : new BSON.ObjectID(quoteObj._id)}, {safe:true}, function(err, result) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					if (res) res.send(result[0]);
+					if (callback) callback();
+				}
+			});
+		});
+	};
+}
+
 var addQuoteToBoardsTask = function(colName, id, payload, res){
 	return function(callback) {
 		var quoteObj = payload;
@@ -877,9 +916,11 @@ var actions = {	"update" : updateTask,
 				"removeCollectionFromQuotes" : removeCollectionFromQuotesTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
+				"pullQuoteFromCollection" : pullQuoteFromCollectionTask,
 				"addQuoteToAuthor" : addQuoteToAuthorTask,
 				"addQuoteToDailyQuote" : addQuoteToDailyQuoteTask,
 				"addQuoteToMyBoard" : addQuoteToMyBoardTask,
+				"removeQuoteFromMyBoard" : removeQuoteFromMyBoardTask,
 				"requote" : requoteTask,
 				"removeQuoteFromDailyQuote" : removeQuoteFromDailyQuoteTask,
 				"addQuoteToBoards" : addQuoteToBoardsTask,

@@ -22,7 +22,7 @@ app.get('/quotes/comment/:id', quotes.getCommentsById);
 app.post('/quotes', quotes.addQuote);
 app.put('/quotes/:id', quotes.updateQuote);
 app.put('/quotes/comment/:id', quotes.addComment);
-app.delete('/quotes/:id', quotes.deleteQuote);
+app.delete('/quotes', quotes.deleteQuote);
 
 app.get('/collections/:id', collections.findById);
 app.get('/collections/search/:query/:num', collections.search);

@@ -109,14 +109,15 @@ exports.updateQuote = function(req, res) {
 																				}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.originalCollectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {collections : quoteObj.newCollectionID}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.originalCollectionID, {$pull : {quotes : id}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.newCollectionID, {$addToSet : {quotes : id}}, res));
+		Queue.push(dbOperations.performDBOperation("pullQuoteFromCollection", "collections", quoteObj.originalCollectionID, quoteObj, null));
+		Queue.push(dbOperations.performDBOperation("findOne", "quotes", quoteObj._id, null, null));
+		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.newCollectionID, null, res));
 		Queue.execute();
 	});
 }
 
 exports.deleteQuote = function(req, res) {
-	var id = req.params.id;
+	// var id = req.params.id;
 	var requestString = '';
 
 	req.on("data",function(data) {	
@@ -125,8 +126,9 @@ exports.deleteQuote = function(req, res) {
 
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.collectionID}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collectionID, {$pull : {quotes : id}}, res));
+		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$pull : {collections : quoteObj.collections[0]}}, null));
+		Queue.push(dbOperations.performDBOperation("pullQuoteFromCollection", "collections", quoteObj.collections[0], quoteObj, null));
+		Queue.push(dbOperations.performDBOperation("removeQuoteFromMyBoard", "boards", quoteObj.quoterID, quoteObj, res));
 		Queue.execute();
 	});
 }
