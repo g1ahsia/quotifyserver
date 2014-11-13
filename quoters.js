@@ -80,7 +80,7 @@ exports.loginQuoter = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
-		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : quoterObj.email, password : quoterObj.password}, res));
+		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : new RegExp(quoterObj.email, "i"), password : quoterObj.password}, res));
 		Queue.execute();
 	});
 }
