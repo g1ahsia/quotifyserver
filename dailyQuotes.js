@@ -13,7 +13,7 @@ exports.findAll = function(req, res) {
 };
 
 exports.findLatestPopular = function(req, res) {
-	var num = req.params.id;
+	var num = req.params.num;
 	Queue.push(dbOperations.performDBOperation("findLatestPopular", "dailyQuotes", null, {'num' : num}, res));
 	Queue.execute();
 };

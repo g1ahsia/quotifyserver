@@ -8,13 +8,15 @@ exports.findById = function(req, res) {
 };
 
 exports.findAll = function(req, res) {
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findAll", "boards", null, null, res));
 	Queue.execute();
 };
 
 exports.findLatest = function(req, res) {
 	var id = req.params.id;
-	var num = req.params.id;
+	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findLatest", "boards", null, {'quoterID' : id, 'num' : num}, res));
 	Queue.execute();
 };
@@ -23,6 +25,7 @@ exports.findNewer = function(req, res) {
 	var qtid = req.params.qtid;
 	var qid = req.params.qid;
 	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
 	Queue.push(dbOperations.performDBOperation("findNewer", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
 	Queue.execute();
@@ -32,6 +35,7 @@ exports.findOlder = function(req, res) {
 	var qtid = req.params.qtid;
 	var qid = req.params.qid;
 	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
 	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
 	Queue.execute();

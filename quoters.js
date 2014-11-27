@@ -17,12 +17,18 @@ exports.findByEmail = function(req, res) {
 	Queue.execute();
 };
 
-// Find all collections
+// Find all quoters
 exports.findAll = function(req, res) {
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findAll", "quoters", null, null, res));
 	Queue.execute();
 };
+
+exports.findRecommended = function(req, res) {
+	var num = req.params.num;
+	Queue.push(dbOperations.performDBOperation("findRecommended", "quoters", null, {'num' : num}, res));
+	Queue.execute();
+}
 
 exports.search = function(req, res) {
 	var name = req.params.name;

@@ -152,6 +152,7 @@ exports.addComment = function(req, res) {
 exports.getCommentsById = function(req, res) {
 	var id = req.params.id;
 	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("getComments", "quotes", id, null, res));
 	Queue.execute();
 };
