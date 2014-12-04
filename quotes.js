@@ -117,7 +117,6 @@ exports.updateQuote = function(req, res) {
 }
 
 exports.deleteQuote = function(req, res) {
-	// var id = req.params.id;
 	var requestString = '';
 
 	req.on("data",function(data) {	

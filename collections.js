@@ -141,12 +141,17 @@ exports.unfollowCollection = function(req, res) {
 }
 
 exports.deleteCollection = function(req, res) {
-	var id = req.params.id;
-	var thisCollection;
-	var quoteArray;
-	var num = 0;
-	Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, null));
-	Queue.push(dbOperations.performDBOperation("removeCollectionFromQuotes", null, id, null, null));
-	Queue.push(dbOperations.performDBOperation("remove", "collections", id, null, res));
-	Queue.execute();
+	var requestString = '';
+
+	req.on("data",function(data) {	
+		requestString += data.toString('utf8');
+	});
+
+	req.on('end', function() {
+		var collectionObj = JSON.parse(requestString);
+		Queue.push(dbOperations.performDBOperation("pullCollectionFromQuotes", "quotes", collectionObj._id, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("pullCollectionFromFollowingQuoters", "quoters", collectionObj._id, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, res));
+		Queue.execute();
+	});
 }

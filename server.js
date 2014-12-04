@@ -34,7 +34,7 @@ app.put('/collections/:id', collections.updateCollection);
 app.put('/collections/chooseCover/:id', collections.chooseCover);
 app.put('/collections/follow/:id', collections.followCollection);
 app.put('/collections/unfollow/:id', collections.unfollowCollection);
-app.delete('/collections/:id', collections.deleteCollection);
+app.delete('/collections', collections.deleteCollection);
 
 app.get('/quoters/:id', quoters.findById);
 app.get('/quoters/email/:email', quoters.findByEmail);

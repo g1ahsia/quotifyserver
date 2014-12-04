@@ -1044,33 +1044,73 @@ var removeTask = function(colName, id, payload, res) {
 	};
 }
 
-var removeCollectionFromQuotesTask = function(colName, id, payload, res) {
+
+var pullCollectionFromQuotesTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var collection = results.shift();
-		var quoteArray = collection.quotes;
-		for (var i = 0; i < quoteArray.length; i++) {
-			if (i == quoteArray.length - 1)
-				db.collection('quotes',  pullCollections(quoteArray[i], id, callback));
-			else
-				db.collection('quotes',  pullCollections(quoteArray[i], id, null));
-		}
+		db.collection(colName, function(err, collection) {
+			var collectionObj = payload;
+			var quoteArray = collectionObj.quotes;
+			if (quoteArray.length == 0) {
+				callback();
+			}
+			else {
+				for (var i = 0; i < quoteArray.length; i++) {
+					if (i == quoteArray.length - 1)
+						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, callback));
+					else
+						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, null));
+				}
+			}
+		});
 	}
 }
 
 // Helper method: Pull collection ID from quotes.collections table
- var pullCollections = function(qid, cid, callback) {
-		return function(err, quotes) {
-			quotes.update({'_id': qid}, { $pull : { collections : cid}}, {safe:true}, function(err, result2) {
-				if (err) {
-					logger.error(err);
-					console.log('Error updating collections: ' + err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					console.log('' + result2 + ' document(s) updated with quote id' + qid);
-					if (callback) callback();
+ var pullCollectionFromQuote = function(collection, qid, cid, callback) {
+	collection.update({'_id': new BSON.ObjectID(qid)}, { $pull : { collections : cid}}, {safe:true}, function(err, result2) {
+		if (err) {
+			logger.error(err);
+			console.log('Error updating collections: ' + err);
+			if (res) res.send({'error':'An error has occurred'});
+		} else {
+			console.log('' + result2 + ' document(s) updated with quote id' + qid + " " + cid);
+			if (callback) callback();
+		}
+	});
+}
+
+var pullCollectionFromFollowingQuotersTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			var collectionObj = payload;
+			var followedByArray = collectionObj.followedBy;
+			if (followedByArray.length == 0) {
+				callback();
+			}
+			else {
+				for (var i = 0; i < followedByArray.length; i++) {
+					if (i == followedByArray.length - 1)
+						db.collection(colName,  pullCollectionFromFollower(collection, followedByArray[i], collectionObj.ownerID, collectionObj._id, callback));
+					else
+						db.collection(colName,  pullCollectionFromFollower(collection, followedByArray[i], collectionObj, null));
 				}
-			});
-	};
+			}
+		});
+	}
+}
+
+// Helper method: Pull collection ID from quotes.collections table
+ var pullCollectionFromFollower = function(collection, qtid, oid, cid, callback) {
+	collection.update({'_id': new BSON.ObjectID(qtid), 'following.ownerID' : oid}, { $pull : {'following.$.collections' : cid}}, {safe:true}, function(err, result) {
+		if (err) {
+			logger.error(err);
+			console.log('Error updating quoters following: ' + err);
+			if (res) res.send({'error':'An error has occurred'});
+		} else {
+			console.log('' + result + ' document(s) updated with quote id' + qtid + " " + oid + " " + cid);
+			if (callback) callback();
+		}
+	});
 }
 
 var getCommentsTask = function(colName, id, payload, res) {
@@ -1103,7 +1143,8 @@ var actions = {	"update" : updateTask,
 				"findAll" : findAllTask,
 				"textSearch" : textSearchTask,
 				"indexSearch" : indexSearchTask,
-				"removeCollectionFromQuotes" : removeCollectionFromQuotesTask,
+				"pullCollectionFromQuotes" : pullCollectionFromQuotesTask,
+				"pullCollectionFromFollowingQuoters" : pullCollectionFromFollowingQuotersTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
 				"pullQuoteFromCollection" : pullQuoteFromCollectionTask,
