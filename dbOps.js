@@ -750,6 +750,26 @@ var addCollectionToQuoterTask = function(colName, id, payload, res){
 	};
 }
 
+var removeCollectionFromQuoterTask = function(colName, id, payload, res){
+	return function(callback) {
+		var collectionObj = payload;
+		db.collection(colName, function(err, collection) {
+			collection.update({'_id': new BSON.ObjectID(id)}, {$pull : {collections : new BSON.ObjectID(collectionObj._id)}}, {safe:true}, function(err, result) {
+				console.log("[removeCollectionFromQuoterTask]");
+				if (err) {
+					logger.error(err);
+					console.log('Error updating quoter ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
+					if (res) res.send(collectionObj);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 
 var addQuoteToCollectionTask = function(colName, id, payload, res){
 	return function(callback) {
@@ -1036,7 +1056,7 @@ var removeTask = function(colName, id, payload, res) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('Successfully removed record: ' + JSON.stringify(result));
-					res.send(result[0]);
+					if (res) res.send(result[0]);
 					callback();
 				}
 			});
@@ -1146,6 +1166,7 @@ var actions = {	"update" : updateTask,
 				"pullCollectionFromQuotes" : pullCollectionFromQuotesTask,
 				"pullCollectionFromFollowingQuoters" : pullCollectionFromFollowingQuotersTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
+				"removeCollectionFromQuoter" : removeCollectionFromQuoterTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
 				"pullQuoteFromCollection" : pullQuoteFromCollectionTask,
 				"addQuoteToAuthor" : addQuoteToAuthorTask,

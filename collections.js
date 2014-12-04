@@ -151,7 +151,9 @@ exports.deleteCollection = function(req, res) {
 		var collectionObj = JSON.parse(requestString);
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromQuotes", "quotes", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromFollowingQuoters", "quoters", collectionObj._id, collectionObj, null));
-		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, res));
+		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, null));
+		Queue.push(dbOperations.performDBOperation("removeCollectionFromQuoter", "quoters", collectionObj.ownerID, collectionObj, res));
+
 		Queue.execute();
 	});
 }
