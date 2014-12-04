@@ -82,6 +82,14 @@ exports.findById = function(req, res) {
   Queue.execute();
 };
 
+exports.search = function(req, res) {
+  var query = req.params.query;
+  var regEx = new RegExp("\\b" + query, "i");
+  var num = req.params.num;
+  Queue.push(dbOperations.performDBSearch("indexSearch", "images", {tags : regEx}, null, null, parseInt(num), res));
+  Queue.execute();
+};
+
 exports.textSearch = function(req, res) {
   var query = req.params.query;
   var num = req.params.num;

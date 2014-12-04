@@ -71,6 +71,7 @@ app.get('/dailyQuotes/latest/:num', dailyQuotes.findLatestPopular);
 app.get('/images/:id', images.findImageById);
 app.get('/images', images.findAll);
 app.get('/images/category/:category', images.findByCategory);
+app.get('/images/search/:query/:num', images.search);
 app.get('/images/textSearch/:query/:num', images.textSearch);
 app.get('/images/metadata/:id', images.findById);
 app.post('/images', images.addImage);

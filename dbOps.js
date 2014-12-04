@@ -93,6 +93,11 @@ db.open(function(err, db) {
 
 		});
 
+		db.createIndex('images', {tags:"1"}, function(err, indexName) {
+			console.log("9. index name: " + indexName);
+
+		});
+
 
 		// db.createIndex('quoters', [{"following.ownerID" : 1}, {unique : true}], function(err, indexName) {
 		// 	console.log("8. index name: " + indexName);
