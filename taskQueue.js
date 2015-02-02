@@ -20,5 +20,5 @@ queue.execute = function () {
 };
 
 queue.last = function() {
-  console.log("end");
+  console.log("end last queue");
 };

@@ -4,9 +4,9 @@ var Queue = require('./taskQueue.js');
 // Find collection by ID
 exports.findById = function(req, res) {
 	var id = req.params.id;
-	console.log('Retrieving collection by ID: ' + id);
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, res));
+	// Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, res));
+	Queue.push(dbOperations.performConditionalSearch("findOneConditional", "collections", id, null, req, res));
 	Queue.execute();
 };
 
@@ -54,10 +54,12 @@ exports.addCollection = function(req, res) {
 		collectionObj["followedBy"] = [];
 		collectionObj["cover"] = "";
 		collectionObj["creationDate"] = new Date();
+		collectionObj["lastModified"] = new Date();
 		// Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, res));
 		// collectionObj["quotes"] = [];
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
-		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res));
+		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, res));
 		Queue.execute();
 	});
 }
@@ -71,7 +73,8 @@ exports.updateCollection = function(req, res) {
 	});
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
-		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, description : collectionObj.description, category : collectionObj.category, isPublic: collectionObj.isPublic}}, res));
+		collectionObj["lastModified"] = new Date();
+		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, description : collectionObj.description, category : collectionObj.category, isPublic: collectionObj.isPublic, lastModified : collectionObj.lastModified}}, res));
 		Queue.execute();
 	});
 }
@@ -118,9 +121,13 @@ exports.followCollection = function(req, res) {
 	});
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
+		collectionObj["lastModified"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$addToSet : {followedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$addToSet : {followedBy : id}}, null));
-		Queue.push(dbOperations.performDBOperation("followCollection", "quoters", id, collectionObj, res));
+		Queue.push(dbOperations.performDBOperation("followCollection", "quoters", id, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$set : {lastModified : collectionObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set : {lastModified : collectionObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : collectionObj.lastModified}}, res));
 		Queue.execute();
 	});
 }
@@ -134,8 +141,11 @@ exports.unfollowCollection = function(req, res) {
 	});
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
+		collectionObj["lastModified"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$pull : {followedBy : id}}, null));
-		Queue.push(dbOperations.performDBOperation("unfollowCollection", "quoters", id, collectionObj, res));
+		Queue.push(dbOperations.performDBOperation("unfollowCollection", "quoters", id, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$set : {lastModified : collectionObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : collectionObj.lastModified}}, res));
 		Queue.execute();
 	});
 }
@@ -149,6 +159,7 @@ exports.deleteCollection = function(req, res) {
 
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
+		collectionObj["lastModified"] = new Date(); // to be implemented
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromQuotes", "quotes", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromFollowingQuoters", "quoters", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, null));

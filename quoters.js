@@ -4,9 +4,9 @@ var Queue = require('./taskQueue.js');
 // Find collection by ID
 exports.findById = function(req, res) {
 	var id = req.params.id;
-	console.log('Retrieving quoter: ' + id);
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findOne", "quoters", id, null, res));
+	// Queue.push(dbOperations.performDBOperation("findOne", "quoters", id, null, res));
+	Queue.push(dbOperations.performConditionalSearch("findOneConditional", "quoters", id, null, req, res));
 	Queue.execute();
 };
 
@@ -62,7 +62,11 @@ exports.addQuoter = function(req, res) {
 
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
-		quoterObj["favoriteQuoteID"] = "";
+		// quoterObj["favoriteQuoteID"] = ""; // version 2.0 depreciated
+		quoterObj["avatar"] = ""; 
+		quoterObj["favoriteQuote"] = ""; // version 3.0
+		quoterObj["favoriteAuthor"] = ""; // version 3.0
+		quoterObj["backgroundImage"] = ""; // version 3.0
 		quoterObj["collections"] = [];
 		quoterObj["following"] = [];
 		quoterObj["followedBy"] = [];
@@ -70,6 +74,7 @@ exports.addQuoter = function(req, res) {
 		quoterObj["likingQuotes"] = [];
 		quoterObj["isValid"] = 1;
 		quoterObj["creationDate"] = new Date();
+		quoterObj["lastModified"] = new Date();
 		Queue.push(dbOperations.performDBOperation("insertQuoter", "quoters", null, quoterObj, res));
 		Queue.execute();
 	});
@@ -102,6 +107,7 @@ exports.updateQuoter = function(req, res) {
 
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
+		quoterObj["lastModified"] = new Date();
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set:quoterObj}, res));
 		Queue.execute();
 	});

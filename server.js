@@ -10,6 +10,23 @@ var express = require('express'),
  
 var app = express();
 
+app.get('/quoters/:id', quoters.findById);
+app.get('/quoters/email/:email', quoters.findByEmail);
+app.get('/quoters/search/:name/:num', quoters.search);
+app.get('/quoters/textSearch/:name/:num', quoters.textSearch);
+app.get('/quoters', quoters.findAll);
+app.post('/quoters/login/', quoters.loginQuoter);
+app.post('/quoters', quoters.addQuoter);
+app.put('/quoters/:id', quoters.updateQuoter);
+app.put('/quoters/like/:id', quoters.likeQuote);
+app.put('/quoters/unlike/:id', quoters.unlikeQuote);
+app.put('/quoters/requote/:id', quoters.requoteQuote);
+app.put('/quoters/favorite/:id', quoters.chooseFavorite);
+app.get('/quoters/recommend/:num', quoters.findRecommended);
+// app.put('/quoters/follow/:id', quoters.followQuoter);
+// app.put('/quoters/followQuoter/:id', quoters.followQuoter);
+app.delete('/quoters/:id', quoters.invalidateQuoter);
+
 // app.get('/queries/history/:query/:num', queries.history);
 // app.get('/queries/quoter/:id/:num', queries.quoter);
 app.get('/quotes/:id', quotes.findById);
@@ -35,24 +52,6 @@ app.put('/collections/chooseCover/:id', collections.chooseCover);
 app.put('/collections/follow/:id', collections.followCollection);
 app.put('/collections/unfollow/:id', collections.unfollowCollection);
 app.delete('/collections', collections.deleteCollection);
-
-app.get('/quoters/:id', quoters.findById);
-app.get('/quoters/email/:email', quoters.findByEmail);
-app.get('/quoters/search/:name/:num', quoters.search);
-app.get('/quoters/textSearch/:name/:num', quoters.textSearch);
-app.get('/quoters', quoters.findAll);
-app.post('/quoters/login/', quoters.loginQuoter);
-app.post('/quoters', quoters.addQuoter);
-app.put('/quoters/:id', quoters.updateQuoter);
-app.put('/quoters/like/:id', quoters.likeQuote);
-app.put('/quoters/unlike/:id', quoters.unlikeQuote);
-app.put('/quoters/requote/:id', quoters.requoteQuote);
-app.put('/quoters/favorite/:id', quoters.chooseFavorite);
-app.get('/quoters/recommend/:num', quoters.findRecommended);
-
-// app.put('/quoters/follow/:id', quoters.followQuoter);
-// app.put('/quoters/followQuoter/:id', quoters.followQuoter);
-app.delete('/quoters/:id', quoters.invalidateQuoter);
 
 app.get('/authors/:id', authors.findById);
 app.get('/authors', authors.findAll);

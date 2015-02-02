@@ -128,7 +128,55 @@ var findOneTask = function(colName, id, payload, res) {
 				} else {
 					results = []; //nullify the results array
 					results.push(item);
-					if (res) res.send(item);
+					if (res) { 
+						// res.writeHead(304, "Not Modified");
+						// res.send(item);
+						// res.statusCode = 304;
+						// res.end();
+						res.send();
+					}
+					logger.log('info', 'findOneTask', {'_id': id});
+					callback();
+				}
+			});
+		});
+	};
+}
+
+
+var findOneConditionalTask = function(colName, id, payload, req, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, item) {
+				var modifiedSince = req.headers["if-modified-since"];
+				var lastModified = item["lastModified"];
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					results = []; //nullify the results array
+					results.push(item);
+					if (res) { 
+						if (!modifiedSince)
+							res.send(item);
+						else {
+							modifiedSince = new Date(modifiedSince);
+						    lastModified = new Date(lastModified);
+							if (lastModified > modifiedSince) {
+								res.send(item);
+								console.log("updated");
+							}
+							else {
+								console.log("not updated");
+								res.statusCode = 304;
+								res.end();
+							}
+						}
+						// res.writeHead(304, "Not Modified");
+						// res.statusCode = 304;
+						// res.end();
+						// res.send();
+					}
 					logger.log('info', 'findOneTask', {'_id': id});
 					callback();
 				}
@@ -549,15 +597,16 @@ var textSearchTask = function(colName, query, output, sort, num, res) {
 var updateTask = function(colName, id, payload, res){
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.update({'_id': new BSON.ObjectID(id)}, payload, {safe:true}, function(err, result) {
+			// collection.update({'_id': new BSON.ObjectID(id)}, payload, {safe:true}, function(err, result) {
+				collection.findAndModify({'_id': new BSON.ObjectID(id)}, [['_id',1]], payload, {new : true}, function(err, result) {
 				console.log("[updateTask] Updating", id, JSON.stringify(payload), " in ", colName);
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
-					console.log('' + result[0] + ' document(s) updated with id ' + id);
+					console.log('' + result + ' document(s) updated with id ' + id);
 
-					if (res) res.send({'OK':'Successfully updated record'});
+					if (res) res.send(result);
 					callback();
 				}
 			});
@@ -1150,7 +1199,9 @@ var getCommentsTask = function(colName, id, payload, res) {
 					console.log('Successfully found record: ' + JSON.stringify(item));
 					results = []; //nullify the results array
 					results.push(item);
-					if (res) res.send(item);
+					if (res) {
+						res.send(item);
+					}
 					callback();
 				}
 			});
@@ -1190,7 +1241,8 @@ var actions = {	"update" : updateTask,
 			    "findLatestPopular" : findLatestPopularTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,
-			    "findRecommended" : findRecommendedTask
+			    "findRecommended" : findRecommendedTask,
+			    "findOneConditional" : findOneConditionalTask // version 3.0
 				};
 
 var results = []; //results of accomplished task
@@ -1202,6 +1254,14 @@ var results = []; //results of accomplished task
  	console.log(task);
  	if (!task) throw "No such task";
  	return task(colName, id, payload, res);
+ }
+
+ exports.performConditionalSearch = function(action, colName, id, payload, req, res) {
+ 	// console.log("*************Performed Operation " + action + "*************");
+ 	var task = actions[action];
+ 	console.log(task);
+ 	if (!task) throw "No such task";
+ 	return task(colName, id, payload, req, res);
  }
 
  exports.performDBSearch = function(action, colName, query, output, sort, num, res) {
