@@ -149,14 +149,31 @@ var findOneConditionalTask = function(colName, id, payload, req, res) {
 		db.collection(colName, function(err, collection) {
 			collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, item) {
 				var modifiedSince = req.headers["if-modified-since"];
-				var lastModified = item["lastModified"];
+				var lastModified;
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
-				} else {
+				} 
+				else if (!item) {
+					if (res) {
+						res.statusCode = 404;
+						res.end();
+					}
+				}
+				else {
 					results = []; //nullify the results array
 					results.push(item);
-					if (res) { 
+					if (res) {
+						// Get last modified in version 2 and 3
+						if (!item.lastModified) {
+							lastModified = item.creationDate;
+							console.log("lastModified is null");
+						}
+						else {
+							lastModified = item.lastModified;
+							console.log("lastModified is not null");
+						} 
+						// Determine what to send in the response depending on date of last modification 
 						if (!modifiedSince)
 							res.send(item);
 						else {
@@ -172,12 +189,8 @@ var findOneConditionalTask = function(colName, id, payload, req, res) {
 								res.end();
 							}
 						}
-						// res.writeHead(304, "Not Modified");
-						// res.statusCode = 304;
-						// res.end();
-						// res.send();
 					}
-					logger.log('info', 'findOneTask', {'_id': id});
+					logger.log('info', 'findOneConditionalTask', {'_id': id});
 					callback();
 				}
 			});
@@ -261,6 +274,25 @@ var findOneByAttrTask = function(colName, id, payload, res) {
 // 		});
 // 	};
 // }
+
+var findLatestBoardTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+				console.log("[findLatestBoardTask] Finding latest board of quoterID " + payload.quoterID);
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					results = []; //nullify the results array
+					results.push(items);
+					if (res) res.send(items);
+					callback();
+				}
+			});
+		});
+	};
+}
 
 var findLatestTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -441,29 +473,29 @@ var findBoardTask = function(colName, id, payload, res) {
 	};
 }
 
-// var findNewerTask = function(colName, id, payload, res) {
-// 	return function(callback) {
-// 		var boardObj = results.shift();
-// 		if (boardObj == null) {
-// 			res.send(null);
-// 			return;
-// 		}
-// 		db.collection(colName, function(err, collection) {
-// 			collection.find({'quoterID' : payload.quoterID, '_id' : {"$gt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-// 				console.log("[findNewerTask] Finding newer");
-// 				if (err) {
-// 					logger.error(err);
-// 					if (res) res.send({'error':'An error has occurred'});
-// 				} else {
-// 					results = []; //nullify the results array
-// 					results.push(items);
-// 					if (res) res.send(items);
-// 					callback();
-// 				}
-// 			});
-// 		});
-// 	};
-// }
+var findNewerBoardTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var boardObj = results.shift();
+		if (boardObj == null) {
+			res.send(null);
+			return;
+		}
+		db.collection(colName, function(err, collection) {
+			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$gt" : new BSON.ObjectID(boardObj.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+				console.log("[findNewerTask] Finding newer");
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					results = []; //nullify the results array
+					results.push(items);
+					if (res) res.send(items);
+					callback();
+				}
+			});
+		});
+	};
+}
 
 var findNewerTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -500,30 +532,30 @@ var findNewerTask = function(colName, id, payload, res) {
 	};
 }
 
-// var findOlderTask = function(colName, id, payload, res) {
-// 	return function(callback) {
-// 		var boardObj = results.shift();
-// 		if (boardObj == null) {
-// 			res.send(null);
-// 			return;
-// 		}
-// 		db.collection(colName, function(err, collection) {
-// 			collection.find({'quoterID' : payload.quoterID, '_id' : {"$lt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
-// 				console.log("[findOlderTask] Finding older");
-// 				if (err) {
-// 					logger.error(err);
-// 					if (res) res.send({'error':'An error has occurred'});
-// 				} else {
-// 					console.log('Successfully found record: ' + JSON.stringify(item));
-// 					results = []; //nullify the results array
-// 					results.push(item);
-// 					if (res) res.send(item);
-// 					callback();
-// 				}
-// 			});
-// 		});
-// 	};
-// }
+var findOlderBoardTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var boardObj = results.shift();
+		if (boardObj == null) {
+			res.send(null);
+			return;
+		}
+		db.collection(colName, function(err, collection) {
+			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$lt" : new BSON.ObjectID(boardObj.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
+				console.log("[findOlderTask] Finding older");
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('Successfully found record: ' + JSON.stringify(item));
+					results = []; //nullify the results array
+					results.push(item);
+					if (res) res.send(item);
+					callback();
+				}
+			});
+		});
+	};
+}
 
 var findOlderTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -1234,10 +1266,13 @@ var actions = {	"update" : updateTask,
 				"addQuoteToBoards" : addQuoteToBoardsTask,
 			    "followCollection" : followCollectionTask,
 			    "unfollowCollection" : unfollowCollectionTask,
-			    "findLatest" : findLatestTask,
+			    "findLatest" : findLatestTask, 
+			    "findLatestBoard" : findLatestBoardTask, // version 3.0
 			    "findBoard" : findBoardTask,
 			    "findNewer" : findNewerTask,
+			    "findNewerBoard" : findNewerBoardTask, // version 3.0
 			    "findOlder" : findOlderTask,
+			    "findOlderBoard" : findOlderBoardTask, // version 3.0
 			    "findLatestPopular" : findLatestPopularTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,

@@ -74,7 +74,12 @@ exports.updateCollection = function(req, res) {
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
 		collectionObj["lastModified"] = new Date();
-		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, description : collectionObj.description, category : collectionObj.category, isPublic: collectionObj.isPublic, lastModified : collectionObj.lastModified}}, res));
+		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, 
+																						description : collectionObj.description, 
+																						category : collectionObj.category, 
+																						isPublic: collectionObj.isPublic, 
+																						lastModified : collectionObj.lastModified
+																					}}, res));
 		Queue.execute();
 	});
 }

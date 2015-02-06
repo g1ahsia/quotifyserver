@@ -112,12 +112,12 @@ exports.updateQuote = function(req, res) {
 																				  authorAttributes : quoteObj.authorAttributes,
 																				  imageAttributes : quoteObj.imageAttributes,
 																				  lastModified : quoteObj.lastModified
-																				}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.originalCollectionID}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {collections : quoteObj.newCollectionID}}, null));
-		Queue.push(dbOperations.performDBOperation("pullQuoteFromCollection", "collections", quoteObj.originalCollectionID, quoteObj, null));
-		Queue.push(dbOperations.performDBOperation("findOne", "quotes", quoteObj._id, null, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.newCollectionID, null, res));
+																				}}, res));
+		// Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.originalCollectionID}}, null));
+		// Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {collections : quoteObj.newCollectionID}}, null));
+		// Queue.push(dbOperations.performDBOperation("pullQuoteFromCollection", "collections", quoteObj.originalCollectionID, quoteObj, null));
+		// Queue.push(dbOperations.performDBOperation("findOne", "quotes", quoteObj._id, null, null));
+		// Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.newCollectionID, null, res)); // to be updated
 		Queue.execute();
 	});
 }
@@ -149,7 +149,9 @@ exports.addComment = function(req, res) {
 	req.on('end', function() {
 		var commentObj = JSON.parse(requestString);
 		commentObj["creationDate"] = new Date();
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {comments : commentObj}}, res));
+		commentObj["lastModified"] = new Date();
+		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {comments : commentObj}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set: {"lastModified" : commentObj.lastModified}}, res));
 		Queue.execute();
 	});
 }
@@ -158,7 +160,7 @@ exports.getCommentsById = function(req, res) {
 	var id = req.params.id;
 	var num = req.params.num;
 
-	console.log("request is: ", req.headers["if-none-match"]);
+	// console.log("request is: ", req.headers["if-none-match"]);
 	// res.writeHead(304, "Not Modified");
 	// res.end();
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
