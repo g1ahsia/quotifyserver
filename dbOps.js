@@ -475,14 +475,10 @@ var findBoardTask = function(colName, id, payload, res) {
 
 var findNewerBoardTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var boardObj = results.shift();
-		if (boardObj == null) {
-			res.send(null);
-			return;
-		}
+		var boardObj = payload;
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$gt" : new BSON.ObjectID(boardObj.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findNewerTask] Finding newer");
+			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$gt" : new Date(boardObj.creationDate)}}).limit(parseInt(boardObj.num)).sort({'_id' : -1}).toArray(function(err, items) {
+				console.log("[findNewerBoardTask] Finding newer");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -534,14 +530,10 @@ var findNewerTask = function(colName, id, payload, res) {
 
 var findOlderBoardTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var boardObj = results.shift();
-		if (boardObj == null) {
-			res.send(null);
-			return;
-		}
+		var boardObj = payload;
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$lt" : new BSON.ObjectID(boardObj.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
-				console.log("[findOlderTask] Finding older");
+			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$lt" : new Date(boardObj.creationDate)}}).limit(parseInt(boardObj.num)).sort({'_id' : -1}).toArray(function(err, item) {
+				console.log("[findOlderBoardTask] Finding older");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -870,7 +862,7 @@ var addQuoteToCollectionTask = function(colName, id, payload, res){
 				} else {
 					console.log('' + result + ' document(s) updated with ' + JSON.stringify(quoteObj));
 					results.push(quoteObj);
-					if (res) res.send(result[0]);
+					if (res) res.send(quoteObj);
 					callback();
 				}
 			});
@@ -1090,6 +1082,9 @@ var addQuoteToBoardsTask = function(colName, id, payload, res){
 		db.collection(colName, function(err, collection) {
 			console.log("[addQuoteToBoard]: Adding quote " + JSON.stringify(quoteObj) + " to " + colName);
 			var collectionObj = results.shift();
+			// to be returned with response to device after addition is complete
+			results = [];
+			results.push(quoteObj); 
 			// If the collection is not followed by anyone, just insert to my own board
 			if (collectionObj.followedBy.length == 0) {
 				// Insert to the quoter's own board
@@ -1125,7 +1120,10 @@ var insertBoard = function(qtid, qid, date, callback, res) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) updated with quote id' + qid);
-					if (res) res.send(result[0]);
+					if (res) {
+						var quoteObj = results.shift();
+						res.send(quoteObj);
+					} 
 					if (callback) callback();
 				}
 			});

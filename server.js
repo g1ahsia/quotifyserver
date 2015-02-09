@@ -60,8 +60,8 @@ app.get('/boards/:id', boards.findById);
 app.get('/boards', boards.findAll);
 app.get('/boards/quoter/:id/:num', boards.findLatest); 
 app.get('/boards/latest/quoter/:id/:num', boards.findLatestBoard); // version 3.0
-app.get('/boards/newer/quoter/:qtid/:qid/:num', boards.findNewerBoard); // version 3.0
-app.get('/boards/older/quoter/:qtid/:qid/:num', boards.findOlderBoard); // version 3.0
+app.get('/boards/newer/quoter/:qtid/:date/:num', boards.findNewerBoard); // version 3.0
+app.get('/boards/older/quoter/:qtid/:date/:num', boards.findOlderBoard); // version 3.0
 app.get('/boards/quoter/newer/:qtid/:qid/:num', boards.findNewer); 
 app.get('/boards/quoter/older/:qtid/:qid/:num', boards.findOlder);  
 app.post('/boards/quoter/:qtid', boards.addQuote);

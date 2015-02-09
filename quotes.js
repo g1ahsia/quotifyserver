@@ -80,13 +80,13 @@ exports.addQuote = function(req, res) {
 		quoteObj["lastModified"] = new Date();
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.collections[0], null, null));
+		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collections[0], {$set: {"lastModified" : quoteObj.lastModified}}, null));
 		// Add quote to the author collection
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "authors", null, {name : quoteObj.author}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToAuthor", "authors", null, quoteObj, null));
 		// Add quote to boards of quoters who follow the collection
 		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, null));
-		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collections[0], {$set: {"lastModified" : quoteObj.lastModified}}, res));
+		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, res));
 		// update author and boards last-updated too
 		Queue.execute();
 	});

@@ -57,9 +57,9 @@ exports.addCollection = function(req, res) {
 		collectionObj["lastModified"] = new Date();
 		// Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, res));
 		// collectionObj["quotes"] = [];
+		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
-		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, null));
-		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, res));
+		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the new collection to be inserted to core data
 		Queue.execute();
 	});
 }
