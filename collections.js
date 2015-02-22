@@ -50,15 +50,23 @@ exports.addCollection = function(req, res) {
 	});
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
+		var notificationObj = collectionObj.notificationObj;
+		delete collectionObj.notificationObj;
 		collectionObj["quotes"] = [];
 		collectionObj["followedBy"] = [];
 		collectionObj["cover"] = "";
 		collectionObj["creationDate"] = new Date();
 		collectionObj["lastModified"] = new Date();
-		// Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, res));
-		// collectionObj["quotes"] = [];
+		// notificationObj["quoterID"]  don't know yet
+		// notificationObj["targetContent"]  from device
+		// notificationObj["originatorID"] from device
+		// notificationObj["originatorName"] from device
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 6;
+		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("sendNotificationToQuoterFollowers", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the new collection to be inserted to core data
 		Queue.execute();
 	});
@@ -126,9 +134,22 @@ exports.followCollection = function(req, res) {
 	});
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
+		var notificationObj = collectionObj.notificationObj;
+		delete collectionObj.notificationObj;
 		collectionObj["lastModified"] = new Date();
+
+		notificationObj["quoterID"] = collectionObj.ownerID;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 3;
+		notificationObj["targetID"] = collectionObj._id;
+		notificationObj["targetContent"] = collectionObj.title;
+		notificationObj["originatorID"] = id;
+		notificationObj["read"] = 0;
+
+		console.log("follow collection", JSON.stringify(notificationObj));
 		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$addToSet : {followedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$addToSet : {followedBy : id}}, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("followCollection", "quoters", id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", collectionObj._id, {$set : {lastModified : collectionObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set : {lastModified : collectionObj.lastModified}}, null));

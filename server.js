@@ -6,8 +6,9 @@ var express = require('express'),
 	  collections = require('./collections'),
 	  quoters = require('./quoters'),
 	  authors = require('./authors'),
-	  images = require('./images');
- 
+	  images = require('./images'),
+	  devices = require('./devices'),
+	  notifications = require('./notifications') 
 var app = express();
 
 app.get('/quoters/:id', quoters.findById);
@@ -84,9 +85,11 @@ app.get('/imageForm', images.imageForm);
 app.put('/images/:id', images.updateImageTags);
 app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
-// app.use(express.static(__dirname));
+app.post('/devices/:id/:UUID', devices.addDevice);
+app.get('/notifications/:id', notifications.findById);
+app.get('/notifications', notifications.findAll);
+app.post('/notifications/update/:id', notifications.update);
 
-//app.post('/uploadImage', images.uploadImage);
  
 app.listen(8080);
 console.log('Listening on port 8080...');

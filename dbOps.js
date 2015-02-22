@@ -1,5 +1,6 @@
 var mongo = require('mongodb');
 var winston = require('winston');
+var notifications = require('./notifications.js');
 
 var Server = mongo.Server,
 	BSON = mongo.BSONPure,
@@ -729,7 +730,6 @@ var unfollowCollectionTask = function(colName, id, collectionObj, res) {
 }
 
 // Helper method: Check if following.collections array is empty. If so, unfollow the quoter
-
 var unfollowQuoter = function(collection, quoterID, collectionOwnerID, collectionID, res, callback) {
 	collection.findOne({'_id': new BSON.ObjectID(quoterID), 'following.ownerID' : collectionOwnerID}, function(err, item) {
 		if (item != null) {
@@ -1238,7 +1238,175 @@ var getCommentsTask = function(colName, id, payload, res) {
 		});
 	};
 }
+/*
+Steps:
+1. Find out if the originator has triggered the event with the target (quote, colleciton or quoter) of a particular quoter before
+2. If it hasn't, then continue, otherwise exit.
+3. Find out how many unread notifications for a particular quoter are there, then increment badge number by 1
+4. Finally, insert to notifications table and send out the push notification to APN
 
+*/
+var sendNotificationTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var notificationObj = payload;
+		db.collection(colName, function(err, collection) {
+			//find out targetID
+			var targetID;
+			// Case 1 or 5 where there are mutiple targetIDs
+			if (notificationObj.event == 1 || notificationObj.event == 5)
+				targetID = notificationObj.targetID[0];
+			else
+				targetID = notificationObj.targetID;
+
+			collection.find({'originatorID' : notificationObj.originatorID, 'event' : notificationObj.event, 'targetID' : targetID, 'quoterID' : notificationObj.quoterID}).toArray(function(err, items) {
+				console.log("[sendNotificationTask] " + JSON.stringify({'originatorID' : notificationObj.originatorID, 'event' : notificationObj.event, 'targetID' : targetID, 'quoterID' : notificationObj.quoterID}));
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} 
+				else {
+					if (items.length != 0) {
+						console.log('Already sent quoter notification, no need to resend');
+						if (res) res.end();
+					}
+					else {
+						collection.find({'quoterID' : notificationObj.quoterID, 'read' : 0}).toArray(function(err, unReads) {		
+							notificationObj['badge'] = unReads.length + 1;
+							collection.insert(notificationObj, {safe:true}, function(err, result) {
+								if (err) {
+									logger.error(err);
+									if (res) res.send({'error':'An error has occurred'});
+								} else {
+									console.log('Successfully sent notification: ' + JSON.stringify(result[0]));
+									notifications.send(notificationObj);
+									if (res) res.send(result[0]);
+								}
+							});
+						});
+					}
+					callback();
+				}
+			});
+		});
+	};
+}
+/*
+Steps:
+1. Find out who the followers of the collection
+2. Send notification to each of the followers
+*/
+
+var sendNotificationToCollectionFollowersTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var notificationObj = payload;
+		var quoteObj = results[0];
+		var collectionID = notificationObj.targetID;
+		db.collection('collections', function(err, collection) {
+			collection.findOne({'_id': new BSON.ObjectID(collectionID)},function(err, item) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} 
+				else {
+					// console.log('found item' + JSON.stringify(item));
+					if (!item) return;
+					var followedBy = item.followedBy;
+					db.collection('notifications', function(err, collection) {
+						for (var i = 0; i < followedBy.length; i++) {
+							console.log('1. index ', i);
+							notificationObj.targetID = [quoteObj._id, collectionID]; // add target ID here 
+							if (i == followedBy.length - 1)
+								sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+							else
+								sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+						}
+					});
+				}
+			});
+		});
+	};
+}
+
+var sendNotificationToQuoterFollowersTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var notificationObj = payload;
+		var collectionObj = results[0];
+		var originatorID = notificationObj.originatorID;
+		db.collection('quoters', function(err, collection) {
+			collection.findOne({'_id': new BSON.ObjectID(originatorID)},function(err, item) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} 
+				else {
+					if (!item) return;
+					// console.log('found item' + JSON.stringify(item));
+					var followedBy = item.followedBy;
+					db.collection('notifications', function(err, collection) {
+						for (var i = 0; i < followedBy.length; i++) {
+							console.log('1. index ', i);
+							notificationObj.targetID = collectionObj._id; // add target ID here 
+							if (i == followedBy.length - 1)
+								sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+							else
+								sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+						}
+					});
+				}
+			});
+		});
+	};
+}
+
+// Helper method: Pull collection ID from quotes.collections table
+var sendNotificationToFollower = function(collection, notificationObj, quoterID, callback) {
+ 	console.log('2. invoke ', quoterID);
+	collection.find({'quoterID' : quoterID, 'read' : 0}).toArray(function(err, unReads) {		
+		console.log('3. finding ', quoterID);
+		collection.insert({'quoterID' : quoterID,
+						   'originatorID' : notificationObj.originatorID,
+						   'originatorName' : notificationObj.originatorName,
+						   'creationDate' : notificationObj.creationDate,
+						   'event' : notificationObj.event,
+						   'read' : notificationObj.read,
+						   'targetID' : notificationObj.targetID,
+						   'targetContent' : notificationObj.targetContent,
+						   'badge' : unReads.length + 1
+							}, {safe:true}, function(err, result) {
+			console.log('inserting', notificationObj);
+			if (err) {
+				logger.error(err);
+			} else {
+				console.log('Successfully sent notification: ' + JSON.stringify(result[0]));
+				notifications.send(result[0]);
+				if (callback) callback();
+			}
+		});
+	});
+}
+
+/*
+Update the read status of all notifications for a particular quoter 
+*/
+var updateNotificationsTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var notificationObj = payload;
+		db.collection(colName, function(err, collection) {
+			collection.update({'quoterID': id}, payload, {multi:true}, function(err, result) {
+				console.log("[updateNotificationsTask] update notifications of quoterID " + id);
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} 
+				else {
+					console.log('' + result + ' document(s) updated with id ' + id);
+					if (res) res.send(result);
+					callback();
+				}
+			});
+		});
+	};
+}
 var actions = {	"update" : updateTask, 
 				"insert" : insertTask, 
 				"insertQuoter" : insertQuoterTask, 
@@ -1275,7 +1443,11 @@ var actions = {	"update" : updateTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,
 			    "findRecommended" : findRecommendedTask,
-			    "findOneConditional" : findOneConditionalTask // version 3.0
+			    "findOneConditional" : findOneConditionalTask, // version 3.0
+			    "sendNotification" : sendNotificationTask,
+			    "sendNotificationToCollectionFollowers" : sendNotificationToCollectionFollowersTask,
+			    "sendNotificationToQuoterFollowers" : sendNotificationToQuoterFollowersTask,
+			    "updateNotifications" : updateNotificationsTask
 				};
 
 var results = []; //results of accomplished task

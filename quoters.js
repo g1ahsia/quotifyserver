@@ -122,12 +122,22 @@ exports.likeQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		var notificationObj = {};
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
+		notificationObj["quoterID"] = quoteObj.quoterID;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 0;
+		notificationObj["targetID"] = quoteObj._id;
+		notificationObj["targetContent"] = quoteObj.quote;
+		notificationObj["originatorID"] = id;
+		notificationObj["originatorName"] = quoteObj.originatorName;
+		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$addToSet : {likingQuotes : quoteObj._id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {likedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set: {"lastModified" : quoteObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$set: {"lastModified" : quoteObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 1}, null));
 		Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : quoteObj._id, 'quoterID' : id}, null));
@@ -167,12 +177,22 @@ exports.requoteQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		var notificationObj = {};
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
+		notificationObj["quoterID"] = quoteObj.quoterID;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 1;
+		notificationObj["targetID"] = [quoteObj._id, quoteObj.collectionID];
+		notificationObj["targetContent"] = [quoteObj.quote, quoteObj.collectionTitle];
+		notificationObj["originatorID"] = id;
+		notificationObj["originatorName"] = quoteObj.originatorName;
+		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("requote", "collections", quoteObj.collectionID, quoteObj, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : quoteObj.collectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collectionID, {$set: {"lastModified" : quoteObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$set: {"lastModified" : quoteObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 2}, null));
 		Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : quoteObj._id, 'quoterID' : id}, null));

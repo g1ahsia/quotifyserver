@@ -74,11 +74,23 @@ exports.addQuote = function(req, res) {
 
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		var notificationObj = quoteObj.notificationObj;
+		delete quoteObj.notificationObj;
 		quoteObj["likedBy"] = [];
 		quoteObj["comments"] = [];
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
+		// notificationObj["quoterID"]  don't know yet
+		// notificationObj["targetContent"]  from device
+		// notificationObj["originatorID"] from device
+		// notificationObj["originatorName"] from device
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 5;
+		notificationObj["read"] = 0;
+		notificationObj["targetID"] = quoteObj.collections[0]; //to be added with quoteID in an array later
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
+		// send push notification to all followers
+		Queue.push(dbOperations.performDBOperation("sendNotificationToCollectionFollowers", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.collections[0], null, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collections[0], {$set: {"lastModified" : quoteObj.lastModified}}, null));
 		// Add quote to the author collection
@@ -147,11 +159,26 @@ exports.addComment = function(req, res) {
 	});
 
 	req.on('end', function() {
-		var commentObj = JSON.parse(requestString);
+		var dataObj = JSON.parse(requestString);
+		var commentObj = {};
+		var notificationObj = {};
+		commentObj["quoterID"] = dataObj.originatorID;
+		commentObj["comment"] = dataObj.targetContent;
+		commentObj["likedBy"] = dataObj.likedBy;
+		commentObj["isBanned"] = dataObj.isBanned;
 		commentObj["creationDate"] = new Date();
 		commentObj["lastModified"] = new Date();
+		notificationObj["quoterID"] = dataObj.quoterID;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 4;
+		notificationObj["targetID"] = dataObj.targetID;
+		notificationObj["targetContent"] = dataObj.targetContent;
+		notificationObj["originatorID"] = dataObj.originatorID;
+		notificationObj["originatorName"] = dataObj.originatorName;
+		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {comments : commentObj}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set: {"lastModified" : commentObj.lastModified}}, res));
+		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set: {"lastModified" : commentObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, res));
 		Queue.execute();
 	});
 }
