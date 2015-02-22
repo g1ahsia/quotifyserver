@@ -122,7 +122,8 @@ exports.likeQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
-		var notificationObj = {};
+		var notificationObj = quoteObj.notificationObj;
+		delete quoteObj.notificationObj;
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
 		notificationObj["quoterID"] = quoteObj.quoterID;
@@ -131,7 +132,6 @@ exports.likeQuote = function(req, res) {
 		notificationObj["targetID"] = quoteObj._id;
 		notificationObj["targetContent"] = quoteObj.quote;
 		notificationObj["originatorID"] = id;
-		notificationObj["originatorName"] = quoteObj.originatorName;
 		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$addToSet : {likingQuotes : quoteObj._id}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {likedBy : id}}, null));
@@ -177,17 +177,18 @@ exports.requoteQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
-		var notificationObj = {};
+		var notificationObj = quoteObj.notificationObj;
+		delete quoteObj.notificationObj;
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
-		notificationObj["quoterID"] = quoteObj.quoterID;
+		// notificationObj["quoterID"] = quoteObj.quoterID;
 		notificationObj["creationDate"] = new Date();
 		notificationObj["event"] = 1;
-		notificationObj["targetID"] = [quoteObj._id, quoteObj.collectionID];
-		notificationObj["targetContent"] = [quoteObj.quote, quoteObj.collectionTitle];
-		notificationObj["originatorID"] = id;
-		notificationObj["originatorName"] = quoteObj.originatorName;
 		notificationObj["read"] = 0;
+		// notificationObj["targetID"] = [quoteObj._id, quoteObj.collectionID];
+		// notificationObj["targetContent"] = [quoteObj.quote, quoteObj.collectionTitle];
+		// notificationObj["originatorID"] = id;
+		// notificationObj["originatorName"] = quoteObj.originatorName;
 		Queue.push(dbOperations.performDBOperation("requote", "collections", quoteObj.collectionID, quoteObj, null));
 		Queue.push(dbOperations.performDBOperation("update", "quotes", quoteObj._id, {$addToSet : {collections : quoteObj.collectionID}}, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collectionID, {$set: {"lastModified" : quoteObj.lastModified}}, null));

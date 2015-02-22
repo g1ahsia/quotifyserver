@@ -34,7 +34,7 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
-exports.send = function(notificationObj) {
+exports.send = function(notificationObj, devices) {
 	if (!notificationObj.quoterID) return;
 	var id = notificationObj.quoterID;
 	var badge = notificationObj.badge;
@@ -54,7 +54,7 @@ exports.send = function(notificationObj) {
 			message = notificationObj.originatorName + ' started following your collection \"' + notificationObj.targetContent + '\"';
 			break;
 		case 4:
-			message = notificationObj.originatorName + ' commented on your quote \"' + notificationObj.targetContent + '\"';
+			message = notificationObj.originatorName + ' commented on your quote';
 			break;
 		case 5:
 			message = notificationObj.originatorName + ' added a new quote \"' + notificationObj.targetContent[0] + '\" in collection \"' + notificationObj.targetContent[1] + '\"';
@@ -73,22 +73,30 @@ exports.send = function(notificationObj) {
 					'targetID' : notificationObj.targetID,
 					'targetContent' : notificationObj.targetContent
 					};
-	var parentFolder = 'devices' + '/' + id.substring(20, 22);
-	var childFolder = parentFolder + '/' + id.substring(22, 24);
-	var designatedFolder = childFolder + '/' + id;
+	// var parentFolder = 'devices' + '/' + id.substring(20, 22);
+	// var childFolder = parentFolder + '/' + id.substring(22, 24);
+	// var designatedFolder = childFolder + '/' + id;
 	// Find all device tokens associated with the quoter
-	fs.readdir(designatedFolder, function(err, files) {
-		if (err) {
-			console.log(err);
-			return;
-		}
-		files.forEach(function (file) {
-			if (file != '.DS_Store') {
-				var filePath = designatedFolder + '/' + file;
-				console.log('token path is ', filePath);
-				sendAPNPushNotification(filePath, {}, badge, message, payload);
-			}
-		});
+
+	// fs.readdir(designatedFolder, function(err, files) {
+		// if (err) {
+		// 	console.log(err);
+		// 	return;
+		// }
+		// files.forEach(function (file) {
+		// 	if (file != '.DS_Store') {
+		// 		var filePath = designatedFolder + '/' + file;
+		// 		console.log('token path is ', filePath);
+		// 		sendAPNPushNotification(filePath, {}, badge, message, payload);
+		// 	}
+		// });
+	// });
+
+	devices.forEach(function (device) {
+		var parentFolder = 'devices' + '/' + device.deviceID.substring(32, 34);
+		var childFolder = parentFolder + '/' + device.deviceID.substring(34, 36);
+		var designatedFile = childFolder + '/' + device.deviceID;
+		sendAPNPushNotification(designatedFile, {}, badge, message, payload);
 	});
 }
 

@@ -1278,7 +1278,8 @@ var sendNotificationTask = function(colName, id, payload, res) {
 									if (res) res.send({'error':'An error has occurred'});
 								} else {
 									console.log('Successfully sent notification: ' + JSON.stringify(result[0]));
-									notifications.send(notificationObj);
+									// notifications.send(notificationObj);
+									sendNotificationToDevices(notificationObj)
 									if (res) res.send(result[0]);
 								}
 							});
@@ -1360,9 +1361,7 @@ var sendNotificationToQuoterFollowersTask = function(colName, id, payload, res) 
 
 // Helper method: Pull collection ID from quotes.collections table
 var sendNotificationToFollower = function(collection, notificationObj, quoterID, callback) {
- 	console.log('2. invoke ', quoterID);
 	collection.find({'quoterID' : quoterID, 'read' : 0}).toArray(function(err, unReads) {		
-		console.log('3. finding ', quoterID);
 		collection.insert({'quoterID' : quoterID,
 						   'originatorID' : notificationObj.originatorID,
 						   'originatorName' : notificationObj.originatorName,
@@ -1373,14 +1372,25 @@ var sendNotificationToFollower = function(collection, notificationObj, quoterID,
 						   'targetContent' : notificationObj.targetContent,
 						   'badge' : unReads.length + 1
 							}, {safe:true}, function(err, result) {
-			console.log('inserting', notificationObj);
 			if (err) {
 				logger.error(err);
 			} else {
 				console.log('Successfully sent notification: ' + JSON.stringify(result[0]));
-				notifications.send(result[0]);
+				// notifications.send(result[0]);
+				sendNotificationToDevices(result[0]);
 				if (callback) callback();
 			}
+		});
+	});
+}
+
+// Helper method: Find all devices associated with quoter to be sent with notificationObj
+var sendNotificationToDevices = function(notificationObj) {
+	console.log('finding devices of ', notificationObj.quoterID);
+	db.collection('devices', function(err, collection) {
+		collection.find({'quoterID' : notificationObj.quoterID}).toArray(function(err, devices) {	
+			console.log('devices are ', JSON.stringify(devices));	
+			notifications.send(notificationObj, devices);
 		});
 	});
 }
@@ -1407,6 +1417,71 @@ var updateNotificationsTask = function(colName, id, payload, res) {
 		});
 	};
 }
+/*
+Steps:
+1. Find out if the deviceID(UUID) has already been registered
+2. If so, then update the quoterID with the current one
+3. If not, add the deviceID with(UUID) the quoterID
+*/
+var addDeviceTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.findOne({'deviceID' : payload.deviceID},function(err, item) {
+				// Device already added
+				if (item) {
+					collection.update({'deviceID' : payload.deviceID}, {$set : {'quoterID' : payload.quoterID}}, {safe:true}, function(err, result) {
+						console.log("[addDeviceTask] Updating device", payload.deviceID, " for ", payload.quoterID);
+						if (err) {
+							logger.error(err);
+							if (res) res.send({'error':'An error has occurred'});
+						} else {
+							if (res) res.send(result[0]);
+							callback();
+						}
+					});
+				}
+				else {
+					collection.insert(payload, {safe:true}, function(err, result) {
+						console.log("[addDeviceTask] Adding device", payload.deviceID, " for ", payload.quoterID);
+						if (err) {
+							logger.error(err);
+							if (res) res.send({'error':'An error has occurred'});
+						} else {
+							if (res) res.send(result[0]);
+							callback();
+						}
+					});
+				}
+			});
+		});
+	};
+}
+
+var unlinkDeviceTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.findOne({'deviceID' : payload.deviceID},function(err, item) {
+				if (item) {
+					collection.update({'deviceID' : payload.deviceID}, {$set : {'quoterID' : ''}}, {safe:true}, function(err, result) {
+						console.log("[unlinkDeviceTask] Updating device", payload.deviceID);
+						if (err) {
+							logger.error(err);
+							if (res) res.send({'error':'An error has occurred'});
+						} else {
+							if (res) res.send(result[0]);
+							callback();
+						}
+					});
+				}
+				else {
+					if (res) res.send(result[0]);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var actions = {	"update" : updateTask, 
 				"insert" : insertTask, 
 				"insertQuoter" : insertQuoterTask, 
@@ -1447,7 +1522,9 @@ var actions = {	"update" : updateTask,
 			    "sendNotification" : sendNotificationTask,
 			    "sendNotificationToCollectionFollowers" : sendNotificationToCollectionFollowersTask,
 			    "sendNotificationToQuoterFollowers" : sendNotificationToQuoterFollowersTask,
-			    "updateNotifications" : updateNotificationsTask
+			    "updateNotifications" : updateNotificationsTask,
+			    "addDevice" : addDeviceTask,
+			    "unlinkDevice" : unlinkDeviceTask
 				};
 
 var results = []; //results of accomplished task
