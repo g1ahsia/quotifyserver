@@ -639,6 +639,24 @@ var updateTask = function(colName, id, payload, res){
 	};
 }
 
+var followQuoterTask = function(colName, id, quoterObj, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.findOne({'_id': new BSON.ObjectID(id), 'following.ownerID' : quoterObj._id},function(err, item) {
+				console.log("[followQuoterTask]: " + id + " quoter name: " + quoterObj._id);
+				// Insert to following field
+				if (item == null) {
+					insertToFollowing(collection, id, quoterObj._id, quoterObj.collections, res, callback);
+				}
+				// Append to following field
+				else {
+					console.log('already following quoter');
+				}
+			});
+		});
+	};
+}
+
 var followCollectionTask = function(colName, id, collectionObj, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
@@ -646,34 +664,10 @@ var followCollectionTask = function(colName, id, collectionObj, res) {
 				console.log("[followCollectionTask]: " + id + " collection ownerID: " + collectionObj.ownerID);
 				// Insert to following field
 				if (item == null) {
-					// collection.update({'_id': new BSON.ObjectID(id)}, {$addToSet : {'following' : {"ownerID" : collectionObj.ownerID, "collections" : [collectionObj._id]}}}, {safe:true}, function(err, result) {
-
-					// 	if (err) {
-					// 		console.log('Error updating collections ' + err);
-					// 		res.send({'error':'An error has occurred'});
-					// 	} else {
-					// 		console.log('' + result[0] + ' document(s) created with id ' + id);
-							
-					// 		if (res) res.send({'OK':'Successfully created record'});
-					// 		callback();
-					// 	}
-					// });
 					insertToFollowing(collection, id, collectionObj.ownerID, collectionObj._id, res, callback);
 				}
 				// Append to following field
 				else {
-					// collection.update({'_id': new BSON.ObjectID(id), 'following.ownerID' : collectionObj.ownerID}, {$addToSet : {'following.$.collections' : collectionObj._id}}, {safe:true}, function(err, result) {
-					// 	console.log(colName, id, JSON.stringify(collectionObj));
-					// 	if (err) {
-					// 		console.log('Error updating collections ' + err);
-					// 		res.send({'error':'An error has occurred'});
-					// 	} else {
-					// 		console.log('' + result[0] + ' document(s) updated with id ' + id);
-							
-					// 		if (res) res.send({'OK':'Successfully updated record'});
-					// 		callback();
-					// 	}
-					// });
 					appendToFollowing(collection, id, collectionObj.ownerID, collectionObj._id, res, callback);
 				}
 			});
@@ -722,7 +716,7 @@ var unfollowCollectionTask = function(colName, id, collectionObj, res) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log("Collection unfollowed successfully", colName, id, JSON.stringify (collectionObj));
-					unfollowQuoter(collection, id, collectionObj.ownerID, collectionObj._id, res, callback);
+					// unfollowQuoter(collection, id, collectionObj.ownerID, collectionObj._id, res, callback);
 				}
 			});
 		});
@@ -730,40 +724,40 @@ var unfollowCollectionTask = function(colName, id, collectionObj, res) {
 }
 
 // Helper method: Check if following.collections array is empty. If so, unfollow the quoter
-var unfollowQuoter = function(collection, quoterID, collectionOwnerID, collectionID, res, callback) {
-	collection.findOne({'_id': new BSON.ObjectID(quoterID), 'following.ownerID' : collectionOwnerID}, function(err, item) {
-		if (item != null) {
-			var followedQuoters = item.following;
-			for (var i = 0; i < followedQuoters.length; i++) {
-				var followedQuoter = followedQuoters[i];
-				if (followedQuoter.ownerID == collectionOwnerID) {
-					var followedCollections = followedQuoter.collections;
-					if (followedCollections.length == 0) {
-						collection.update({'_id': new BSON.ObjectID(collectionOwnerID)}, {$pull : {followedBy : quoterID}}, {safe:true}, function(err, result) {
-							if (err) {
-								logger.error(err);
-								if (res) res.send({'error':'An error has occurred'});
-							} else {
-								console.log(quoterID + ' unfollowed quoter successfully' + collectionOwnerID);
+// var unfollowQuoter = function(collection, quoterID, collectionOwnerID, collectionID, res, callback) {
+// 	collection.findOne({'_id': new BSON.ObjectID(quoterID), 'following.ownerID' : collectionOwnerID}, function(err, item) {
+// 		if (item != null) {
+// 			var followedQuoters = item.following;
+// 			for (var i = 0; i < followedQuoters.length; i++) {
+// 				var followedQuoter = followedQuoters[i];
+// 				if (followedQuoter.ownerID == collectionOwnerID) {
+// 					var followedCollections = followedQuoter.collections;
+// 					if (followedCollections.length == 0) {
+// 						collection.update({'_id': new BSON.ObjectID(collectionOwnerID)}, {$pull : {followedBy : quoterID}}, {safe:true}, function(err, result) {
+// 							if (err) {
+// 								logger.error(err);
+// 								if (res) res.send({'error':'An error has occurred'});
+// 							} else {
+// 								console.log(quoterID + ' unfollowed quoter successfully' + collectionOwnerID);
 
-								if (res) res.send({'OK':'Successfully unfollowed quoter'});
-								callback();
-							}
-						});
-					}
-					else {
-						if (res) res.send({'OK':'Still following quoter'});
-						callback();
-					}
-				}
-			}
-		}
-		else {
-			if (res) res.send({'Error':'Couldnt find quoter'});
-			callback();
-		}
-	});
-}
+// 								if (res) res.send({'OK':'Successfully unfollowed quoter'});
+// 								callback();
+// 							}
+// 						});
+// 					}
+// 					else {
+// 						if (res) res.send({'OK':'Still following quoter'});
+// 						callback();
+// 					}
+// 				}
+// 			}
+// 		}
+// 		else {
+// 			if (res) res.send({'Error':'Couldnt find quoter'});
+// 			callback();
+// 		}
+// 	});
+// }
 
 // var followQuoterTask = function(colName, id, collectionObj, res) {
 
@@ -1277,7 +1271,7 @@ var sendNotificationTask = function(colName, id, payload, res) {
 									logger.error(err);
 									if (res) res.send({'error':'An error has occurred'});
 								} else {
-									console.log('Successfully sent notification: ' + JSON.stringify(result[0]));
+									console.log('Successfully add notification: ' + JSON.stringify(result[0]));
 									// notifications.send(notificationObj);
 									sendNotificationToDevices(notificationObj)
 									if (res) res.send(result[0]);
@@ -1505,6 +1499,7 @@ var actions = {	"update" : updateTask,
 				"requote" : requoteTask,
 				"removeQuoteFromDailyQuote" : removeQuoteFromDailyQuoteTask,
 				"addQuoteToBoards" : addQuoteToBoardsTask,
+				"followQuoter" : followQuoterTask,
 			    "followCollection" : followCollectionTask,
 			    "unfollowCollection" : unfollowCollectionTask,
 			    "findLatest" : findLatestTask, 

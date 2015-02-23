@@ -202,6 +202,55 @@ exports.requoteQuote = function(req, res) {
 	});
 }
 
+exports.followQuoter = function(req, res) {
+	var id = req.params.id;
+	var requestString = '';
+
+	req.on("data",function(data) {	
+		requestString += data.toString('utf8');
+	});
+	req.on('end', function() {
+		var quoterObj = JSON.parse(requestString);
+		var notificationObj = quoterObj.notificationObj;
+		delete quoterObj.notificationObj;
+		quoterObj["lastModified"] = new Date();
+
+		notificationObj["quoterID"] = quoterObj._id;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 2;
+		notificationObj["targetID"] = quoterObj._id;
+		notificationObj["targetContent"] = quoterObj.name;
+		notificationObj["originatorID"] = id;
+		notificationObj["read"] = 0;
+
+		console.log("follow collection", JSON.stringify(notificationObj));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$addToSet : {followedBy : id}}, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
+		Queue.push(dbOperations.performDBOperation("followQuoter", "quoters", id, quoterObj, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$set : {lastModified : quoterObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : quoterObj.lastModified}}, res));
+		Queue.execute();
+	});
+}
+
+exports.unfollowQuoter = function(req, res) {
+	var id = req.params.id;
+	var requestString = '';
+
+	req.on("data",function(data){	
+		requestString += data.toString('utf8');
+	});
+	req.on('end', function() {
+		var quoterObj = JSON.parse(requestString);
+		quoterObj["lastModified"] = new Date();
+		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$pull : {followedBy : id}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$pull : {'following' : {ownerID : quoterObj._id}}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$set : {lastModified : quoterObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : quoterObj.lastModified}}, res));
+		Queue.execute();
+	});
+}
+
 exports.chooseFavorite = function(req, res) {
 	var id = req.params.id;
 	var requestString = '';

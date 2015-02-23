@@ -24,8 +24,8 @@ app.put('/quoters/unlike/:id', quoters.unlikeQuote);
 app.put('/quoters/requote/:id', quoters.requoteQuote);
 app.put('/quoters/favorite/:id', quoters.chooseFavorite);
 app.get('/quoters/recommend/:num', quoters.findRecommended);
-// app.put('/quoters/follow/:id', quoters.followQuoter);
-// app.put('/quoters/followQuoter/:id', quoters.followQuoter);
+app.put('/quoters/follow/:id', quoters.followQuoter);
+app.put('/quoters/unfollow/:id', quoters.unfollowQuoter);
 app.delete('/quoters/:id', quoters.invalidateQuoter);
 
 // app.get('/queries/history/:query/:num', queries.history);
