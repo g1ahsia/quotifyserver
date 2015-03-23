@@ -1306,16 +1306,21 @@ var sendNotificationToCollectionFollowersTask = function(colName, id, payload, r
 					// console.log('found item' + JSON.stringify(item));
 					if (!item) return;
 					var followedBy = item.followedBy;
-					db.collection('notifications', function(err, collection) {
-						for (var i = 0; i < followedBy.length; i++) {
-							console.log('1. index ', i);
-							notificationObj.targetID = [quoteObj._id, collectionID]; // add target ID here 
-							if (i == followedBy.length - 1)
-								sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
-							else
-								sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
-						}
-					});
+					if (followedBy.length == 0) {
+						if (callback) callback();
+					}
+					else {
+						db.collection('notifications', function(err, collection) {
+							for (var i = 0; i < followedBy.length; i++) {
+								console.log('1. index ', i);
+								notificationObj.targetID = [quoteObj._id, collectionID]; // add target ID here 
+								if (i == followedBy.length - 1)
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+								else
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+							}
+						});
+					}
 				}
 			});
 		});
@@ -1335,18 +1340,24 @@ var sendNotificationToQuoterFollowersTask = function(colName, id, payload, res) 
 				} 
 				else {
 					if (!item) return;
-					// console.log('found item' + JSON.stringify(item));
 					var followedBy = item.followedBy;
-					db.collection('notifications', function(err, collection) {
-						for (var i = 0; i < followedBy.length; i++) {
-							console.log('1. index ', i);
-							notificationObj.targetID = collectionObj._id; // add target ID here 
-							if (i == followedBy.length - 1)
-								sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
-							else
-								sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
-						}
-					});
+					// No followers of mine
+					if (followedBy.length == 0) {
+						callback();
+					}
+					// Send notifications to my followers
+					else {
+						db.collection('notifications', function(err, collection) {
+							for (var i = 0; i < followedBy.length; i++) {
+								console.log('1. index ', i);
+								notificationObj.targetID = collectionObj._id; // add target ID here 
+								if (i == followedBy.length - 1)
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+								else
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+							}
+						});
+					}
 				}
 			});
 		});
