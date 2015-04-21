@@ -2,6 +2,13 @@ var dbOperations = require('./dbOps');
 var Queue = require('./taskQueue.js');
 var fs = require('fs');
 
+exports.findAll = function(req, res) {
+	console.log("finding all quotes");
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	Queue.push(dbOperations.performDBOperation("findAll", "devices", null, null, res));
+	Queue.execute();
+};
+
 exports.addDevice = function(req, res) {
 	var id = req.params.id;
 	var UUID = req.params.UUID;

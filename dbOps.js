@@ -276,11 +276,11 @@ var findOneByAttrTask = function(colName, id, payload, res) {
 // 	};
 // }
 
-var findLatestBoardTask = function(colName, id, payload, res) {
+var findLatestTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
 			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findLatestBoardTask] Finding latest board of quoterID " + payload.quoterID);
+				console.log("[findLatestTask] Finding latest records of quoterID " + payload.quoterID);
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -295,11 +295,11 @@ var findLatestBoardTask = function(colName, id, payload, res) {
 	};
 }
 
-var findLatestTask = function(colName, id, payload, res) {
+var findLatestBoardTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
 			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findLatestTask] Finding latest of quoterID " + payload.quoterID);
+				console.log("[findLatestBoardTask] Finding latest of quoterID " + payload.quoterID);
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -642,15 +642,17 @@ var updateTask = function(colName, id, payload, res){
 var followQuoterTask = function(colName, id, quoterObj, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.findOne({'_id': new BSON.ObjectID(id), 'following.ownerID' : quoterObj._id},function(err, item) {
+			collection.findOne({'_id': new BSON.ObjectID(id), 'following.ownerID' : quoterObj._id},function(err, result) {
 				console.log("[followQuoterTask]: " + id + " quoter name: " + quoterObj._id);
 				// Insert to following field
-				if (item == null) {
+				if (result == null) {
 					insertToFollowing(collection, id, quoterObj._id, quoterObj.collections, res, callback);
 				}
 				// Append to following field
 				else {
 					console.log('already following quoter');
+					if (res) res.send(result);
+					callback();
 				}
 			});
 		});
@@ -664,7 +666,7 @@ var followCollectionTask = function(colName, id, collectionObj, res) {
 				console.log("[followCollectionTask]: " + id + " collection ownerID: " + collectionObj.ownerID);
 				// Insert to following field
 				if (item == null) {
-					insertToFollowing(collection, id, collectionObj.ownerID, collectionObj._id, res, callback);
+					insertToFollowing(collection, id, collectionObj.ownerID, [collectionObj._id], res, callback);
 				}
 				// Append to following field
 				else {
@@ -676,14 +678,14 @@ var followCollectionTask = function(colName, id, collectionObj, res) {
 }
 
 // Helper methods for quoter following collection
-var insertToFollowing = function(collection, quoterID, collectionOwnerID, collectionID, res, callback) {
-	collection.update({'_id': new BSON.ObjectID(quoterID)}, {$addToSet : {'following' : {"ownerID" : collectionOwnerID, "collections" : [collectionID]}}}, {safe:true}, function(err, result) {
+var insertToFollowing = function(collection, quoterID, collectionOwnerID, collectionArray, res, callback) {
+	collection.update({'_id': new BSON.ObjectID(quoterID)}, {$addToSet : {'following' : {"ownerID" : collectionOwnerID, "collections" : collectionArray}}}, {safe:true}, function(err, result) {
 		if (err) {
 			logger.error(err);
 			console.log('Error updating collections ' + err);
 			if (res) res.send({'error':'An error has occurred'});
 		} else {
-			console.log('' + quoterID + ' is now following collection ' + collectionID);
+			console.log('' + quoterID + ' is now following collection ' + collectionArray);
 			
 			if (res) res.send({'OK':'Successfully inserted to following'});
 			callback();
@@ -1465,6 +1467,7 @@ var addDeviceTask = function(colName, id, payload, res) {
 var unlinkDeviceTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
+			console.log('deviceID: ', payload.deviceID);
 			collection.findOne({'deviceID' : payload.deviceID},function(err, item) {
 				if (item) {
 					collection.update({'deviceID' : payload.deviceID}, {$set : {'quoterID' : ''}}, {safe:true}, function(err, result) {
@@ -1479,7 +1482,7 @@ var unlinkDeviceTask = function(colName, id, payload, res) {
 					});
 				}
 				else {
-					if (res) res.send(result[0]);
+					if (res) res.send();
 					callback();
 				}
 			});

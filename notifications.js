@@ -34,6 +34,14 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
+exports.findLatest = function(req, res) {
+	var id = req.params.id;
+	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	Queue.push(dbOperations.performDBOperation("findLatest", "notifications", null, {'quoterID' : id, 'num' : num}, res));
+	Queue.execute();
+};
+
 exports.send = function(notificationObj, devices) {
 	if (!notificationObj.quoterID) return;
 	var id = notificationObj.quoterID;
@@ -54,7 +62,7 @@ exports.send = function(notificationObj, devices) {
 			message = notificationObj.originatorName + ' started following your collection \"' + notificationObj.targetContent + '\"';
 			break;
 		case 4:
-			message = notificationObj.originatorName + ' commented on your quote';
+			message = notificationObj.originatorName + ' commented on your quote \"' + notificationObj.targetContent + '\"';
 			break;
 		case 5:
 			message = notificationObj.originatorName + ' added a new quote \"' + notificationObj.targetContent[0] + '\" in collection \"' + notificationObj.targetContent[1] + '\"';

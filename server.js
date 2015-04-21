@@ -59,8 +59,8 @@ app.get('/authors', authors.findAll);
 
 app.get('/boards/:id', boards.findById);
 app.get('/boards', boards.findAll);
-app.get('/boards/quoter/:id/:num', boards.findLatest); 
-app.get('/boards/latest/quoter/:id/:num', boards.findLatestBoard); // version 3.0
+app.get('/boards/quoter/:id/:num', boards.findLatestBoard); 
+app.get('/boards/latest/quoter/:id/:num', boards.findLatest); // version 3.0
 app.get('/boards/newer/quoter/:qtid/:date/:num', boards.findNewerBoard); // version 3.0
 app.get('/boards/older/quoter/:qtid/:date/:num', boards.findOlderBoard); // version 3.0
 app.get('/boards/quoter/newer/:qtid/:qid/:num', boards.findNewer); 
@@ -85,10 +85,12 @@ app.get('/imageForm', images.imageForm);
 app.put('/images/:id', images.updateImageTags);
 app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
+app.get('/devices', devices.findAll);
 app.post('/devices/:id/:UUID', devices.addDevice);
 app.put('/devices/unlink/:UUID', devices.unlinkDevice);
 
 app.get('/notifications/:id', notifications.findById);
+app.get('/notifications/quoter/:id/:num', notifications.findLatest); 
 app.get('/notifications', notifications.findAll);
 app.put('/notifications/update/:id', notifications.update);
 

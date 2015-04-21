@@ -13,20 +13,20 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
-exports.findLatest = function(req, res) {
-	var id = req.params.id;
-	var num = req.params.num;
-	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findLatest", "boards", null, {'quoterID' : id, 'num' : num}, res));
-	Queue.execute();
-};
-
-// version 3.0
 exports.findLatestBoard = function(req, res) {
 	var id = req.params.id;
 	var num = req.params.num;
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	Queue.push(dbOperations.performDBOperation("findLatestBoard", "boards", null, {'quoterID' : id, 'num' : num}, res));
+	Queue.execute();
+};
+
+// version 3.0
+exports.findLatest = function(req, res) {
+	var id = req.params.id;
+	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	Queue.push(dbOperations.performDBOperation("findLatest", "boards", null, {'quoterID' : id, 'num' : num}, res));
 	Queue.execute();
 };
 
