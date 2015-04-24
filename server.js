@@ -59,12 +59,12 @@ app.get('/authors', authors.findAll);
 
 app.get('/boards/:id', boards.findById);
 app.get('/boards', boards.findAll);
-app.get('/boards/quoter/:id/:num', boards.findLatestBoard); 
 app.get('/boards/latest/quoter/:id/:num', boards.findLatest); // version 3.0
 app.get('/boards/newer/quoter/:qtid/:date/:num', boards.findNewerBoard); // version 3.0
 app.get('/boards/older/quoter/:qtid/:date/:num', boards.findOlderBoard); // version 3.0
-app.get('/boards/quoter/newer/:qtid/:qid/:num', boards.findNewer); 
-app.get('/boards/quoter/older/:qtid/:qid/:num', boards.findOlder);  
+// app.get('/boards/quoter/:id/:num', boards.findLatestBoard); version 2.0
+// app.get('/boards/quoter/newer/:qtid/:qid/:num', boards.findNewer); // version 2.0
+// app.get('/boards/quoter/older/:qtid/:qid/:num', boards.findOlder);  // version 2.0
 app.post('/boards/quoter/:qtid', boards.addQuote);
 
 app.get('/dailyQuotes/:id', dailyQuotes.findById);
@@ -91,6 +91,8 @@ app.put('/devices/unlink/:UUID', devices.unlinkDevice);
 
 app.get('/notifications/:id', notifications.findById);
 app.get('/notifications/quoter/:id/:num', notifications.findLatest); 
+app.get('/notifications/newer/quoter/:qtid/:date/:num', notifications.findNewerNotification);
+app.get('/notifications/older/quoter/:qtid/:date/:num', notifications.findOlderNotification); 
 app.get('/notifications', notifications.findAll);
 app.put('/notifications/update/:id', notifications.update);
 

@@ -16,7 +16,7 @@ exports.addDevice = function(req, res) {
 	var body = '';
 	req.on("data",function(data) {
 		body += data;
-		console.log('getting token ', data.toString());
+		console.log('add token ', data.toString(), 'of device ', UUID);
 	});
 
 	req.on('end', function() {
@@ -33,7 +33,7 @@ exports.addDevice = function(req, res) {
 				// if (err) throw err;
 				fs.writeFile(designatedFile, token, function (err) {
 					// if (err) throw err;
-					console.log('Token is saved!');
+					console.log('Token' + token + 'is saved!');
 				});
 			});
 		});

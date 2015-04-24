@@ -295,35 +295,36 @@ var findLatestTask = function(colName, id, payload, res) {
 	};
 }
 
-var findLatestBoardTask = function(colName, id, payload, res) {
-	return function(callback) {
-		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findLatestBoardTask] Finding latest of quoterID " + payload.quoterID);
-				if (err) {
-					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					results = [];
-					var i = 0;
-					if (items.length != 0) {
-						items.forEach(function (quote) {
-							db.collection('quotes', function(err, col) {
-								console.log(quote.quoteID);
-								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
-								i++;
-							});
-						});
-					}
-					else {
-						res.send(results);
-						callback();
-					}
-				}
-			});
-		});
-	};
-}
+// version 2.0
+// var findLatestBoardTask = function(colName, id, payload, res) {
+// 	return function(callback) {
+// 		db.collection(colName, function(err, collection) {
+// 			collection.find({'quoterID' : payload.quoterID}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+// 				console.log("[findLatestBoardTask] Finding latest of quoterID " + payload.quoterID);
+// 				if (err) {
+// 					logger.error(err);
+// 					if (res) res.send({'error':'An error has occurred'});
+// 				} else {
+// 					results = [];
+// 					var i = 0;
+// 					if (items.length != 0) {
+// 						items.forEach(function (quote) {
+// 							db.collection('quotes', function(err, col) {
+// 								console.log(quote.quoteID);
+// 								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
+// 								i++;
+// 							});
+// 						});
+// 					}
+// 					else {
+// 						res.send(results);
+// 						callback();
+// 					}
+// 				}
+// 			});
+// 		});
+// 	};
+// }
 
 // Helper function to add quote to array in order
 var appendQuoteToQuoteArray = function(col, quote, index, numOfQuotes, res, callback) {
@@ -474,12 +475,12 @@ var findBoardTask = function(colName, id, payload, res) {
 	};
 }
 
-var findNewerBoardTask = function(colName, id, payload, res) {
+// version 3.0
+var findNewerTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var boardObj = payload;
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$gt" : new Date(boardObj.creationDate)}}).limit(parseInt(boardObj.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findNewerBoardTask] Finding newer");
+			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$gt" : new Date(payload.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+				console.log("[findNewerTask] Finding newer");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -494,47 +495,12 @@ var findNewerBoardTask = function(colName, id, payload, res) {
 	};
 }
 
-var findNewerTask = function(colName, id, payload, res) {
+// version 3.0
+var findOlderTask = function(colName, id, payload, res) {
 	return function(callback) {
-		var boardObj = results.shift();
-		if (boardObj == null) {
-			res.send(null);
-			return;
-		}
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID, '_id' : {"$gt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findNewerTask] Finding newer");
-				if (err) {
-					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					results = [];
-					var i = 0;
-					if (items.length != 0) {
-						items.forEach(function (quote) {
-							db.collection('quotes', function(err, col) {
-								console.log(quote.quoteID);
-								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
-								i++;
-							});
-						});
-					}
-					else {
-						res.send(results);
-						callback();
-					}
-				}
-			});
-		});
-	};
-}
-
-var findOlderBoardTask = function(colName, id, payload, res) {
-	return function(callback) {
-		var boardObj = payload;
-		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$lt" : new Date(boardObj.creationDate)}}).limit(parseInt(boardObj.num)).sort({'_id' : -1}).toArray(function(err, item) {
-				console.log("[findOlderBoardTask] Finding older");
+			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$lt" : new Date(payload.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
+				console.log("[findOlderTask] Finding older");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
@@ -550,40 +516,77 @@ var findOlderBoardTask = function(colName, id, payload, res) {
 	};
 }
 
-var findOlderTask = function(colName, id, payload, res) {
-	return function(callback) {
-		var boardObj = results.shift();
-		if (boardObj == null) {
-			res.send(null);
-			return;
-		}
-		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : payload.quoterID, '_id' : {"$lt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
-				console.log("[findOlderTask] Finding older");
-				if (err) {
-					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					results = [];
-					var i = 0;
-					if (items.length != 0) {
-						items.forEach(function (quote) {
-							db.collection('quotes', function(err, col) {
-								console.log(quote.quoteID);
-								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
-								i++;
-							});
-						});
-					}
-					else {
-						res.send(results);
-						callback();
-					}
-				}
-			});
-		});
-	};
-}
+// version 2.0
+// var findNewerTask = function(colName, id, payload, res) {
+// 	return function(callback) {
+// 		var boardObj = results.shift();
+// 		if (boardObj == null) {
+// 			res.send(null);
+// 			return;
+// 		}
+// 		db.collection(colName, function(err, collection) {
+// 			collection.find({'quoterID' : payload.quoterID, '_id' : {"$gt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+// 				console.log("[findNewerTask] Finding newer");
+// 				if (err) {
+// 					logger.error(err);
+// 					if (res) res.send({'error':'An error has occurred'});
+// 				} else {
+// 					results = [];
+// 					var i = 0;
+// 					if (items.length != 0) {
+// 						items.forEach(function (quote) {
+// 							db.collection('quotes', function(err, col) {
+// 								console.log(quote.quoteID);
+// 								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
+// 								i++;
+// 							});
+// 						});
+// 					}
+// 					else {
+// 						res.send(results);
+// 						callback();
+// 					}
+// 				}
+// 			});
+// 		});
+// 	};
+// }
+
+// version 2.0
+// var findOlderTask = function(colName, id, payload, res) {
+// 	return function(callback) {
+// 		var boardObj = results.shift();
+// 		if (boardObj == null) {
+// 			res.send(null);
+// 			return;
+// 		}
+// 		db.collection(colName, function(err, collection) {
+// 			collection.find({'quoterID' : payload.quoterID, '_id' : {"$lt" : new BSON.ObjectID(boardObj._id)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+// 				console.log("[findOlderTask] Finding older");
+// 				if (err) {
+// 					logger.error(err);
+// 					if (res) res.send({'error':'An error has occurred'});
+// 				} else {
+// 					results = [];
+// 					var i = 0;
+// 					if (items.length != 0) {
+// 						items.forEach(function (quote) {
+// 							db.collection('quotes', function(err, col) {
+// 								console.log(quote.quoteID);
+// 								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
+// 								i++;
+// 							});
+// 						});
+// 					}
+// 					else {
+// 						res.send(results);
+// 						callback();
+// 					}
+// 				}
+// 			});
+// 		});
+// 	};
+// }
 
 var indexSearchTask = function(colName, query, output, sort, num, res) {
 	return function(callback) {
@@ -1520,9 +1523,7 @@ var actions = {	"update" : updateTask,
 			    "findLatestBoard" : findLatestBoardTask, // version 3.0
 			    "findBoard" : findBoardTask,
 			    "findNewer" : findNewerTask,
-			    "findNewerBoard" : findNewerBoardTask, // version 3.0
 			    "findOlder" : findOlderTask,
-			    "findOlderBoard" : findOlderBoardTask, // version 3.0
 			    "findLatestPopular" : findLatestPopularTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,

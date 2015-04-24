@@ -42,6 +42,24 @@ exports.findLatest = function(req, res) {
 	Queue.execute();
 };
 
+exports.findNewerNotification = function(req, res) {
+	var qtid = req.params.qtid;
+	var date = req.params.date;
+	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	Queue.push(dbOperations.performDBOperation("findNewer", "notifications", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
+	Queue.execute();
+};
+
+exports.findOlderNotification = function(req, res) {
+	var qtid = req.params.qtid;
+	var date = req.params.date;
+	var num = req.params.num;
+	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	Queue.push(dbOperations.performDBOperation("findOlder", "notifications", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
+	Queue.execute();
+};
+
 exports.send = function(notificationObj, devices) {
 	if (!notificationObj.quoterID) return;
 	var id = notificationObj.quoterID;

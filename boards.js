@@ -13,13 +13,14 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
-exports.findLatestBoard = function(req, res) {
-	var id = req.params.id;
-	var num = req.params.num;
-	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findLatestBoard", "boards", null, {'quoterID' : id, 'num' : num}, res));
-	Queue.execute();
-};
+// version 2.0
+// exports.findLatestBoard = function(req, res) {
+// 	var id = req.params.id;
+// 	var num = req.params.num;
+// 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+// 	Queue.push(dbOperations.performDBOperation("findLatestBoard", "boards", null, {'quoterID' : id, 'num' : num}, res));
+// 	Queue.execute();
+// };
 
 // version 3.0
 exports.findLatest = function(req, res) {
@@ -30,15 +31,27 @@ exports.findLatest = function(req, res) {
 	Queue.execute();
 };
 
-exports.findNewer = function(req, res) {
-	var qtid = req.params.qtid;
-	var qid = req.params.qid;
-	var num = req.params.num;
-	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
-	Queue.push(dbOperations.performDBOperation("findNewer", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
-	Queue.execute();
-};
+// version 2.0
+// exports.findNewer = function(req, res) {
+// 	var qtid = req.params.qtid;
+// 	var qid = req.params.qid;
+// 	var num = req.params.num;
+// 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+// 	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
+// 	Queue.push(dbOperations.performDBOperation("findNewer", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
+// 	Queue.execute();
+// };
+
+// version 2.0
+// exports.findOlder = function(req, res) {
+// 	var qtid = req.params.qtid;
+// 	var qid = req.params.qid;
+// 	var num = req.params.num;
+// 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+// 	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
+// 	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
+// 	Queue.execute();
+// };
 
 // version 3.0
 exports.findNewerBoard = function(req, res) {
@@ -46,17 +59,7 @@ exports.findNewerBoard = function(req, res) {
 	var date = req.params.date;
 	var num = req.params.num;
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findNewerBoard", "boards", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
-	Queue.execute();
-};
-
-exports.findOlder = function(req, res) {
-	var qtid = req.params.qtid;
-	var qid = req.params.qid;
-	var num = req.params.num;
-	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : qid, 'quoterID' : qtid}, null));
-	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'num' : num}, res));
+	Queue.push(dbOperations.performDBOperation("findNewer", "boards", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
 	Queue.execute();
 };
 
@@ -66,7 +69,7 @@ exports.findOlderBoard = function(req, res) {
 	var date = req.params.date;
 	var num = req.params.num;
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-	Queue.push(dbOperations.performDBOperation("findOlderBoard", "boards", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
+	Queue.push(dbOperations.performDBOperation("findOlder", "boards", null, {'quoterID' : qtid, 'creationDate' : date, 'num' : num}, res));
 	Queue.execute();
 };
 
