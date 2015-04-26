@@ -33,7 +33,7 @@ app.delete('/quoters/:id', quoters.invalidateQuoter);
 app.get('/quotes/:id', quotes.findById);
 app.get('/quotes/quoter/:id/:num', quotes.findByQuoterId);
 app.get('/quotes/image/:id/:num', quotes.findRecentImagesByQuoterId);
-app.get('/quotes/search/:name/:num', quotes.search);
+app.get('/quotes/search/:query/:num', quotes.textSearch);
 app.get('/quotes/textSearch/:query/:num', quotes.textSearch);
 app.get('/quotes', quotes.findAll);
 app.get('/quotes/comment/:id', quotes.getCommentsById);
@@ -56,6 +56,7 @@ app.delete('/collections', collections.deleteCollection);
 
 app.get('/authors/:id', authors.findById);
 app.get('/authors', authors.findAll);
+app.get('/authors/search/:name/:num', authors.search);
 
 app.get('/boards/:id', boards.findById);
 app.get('/boards', boards.findAll);

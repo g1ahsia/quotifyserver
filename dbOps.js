@@ -479,7 +479,7 @@ var findBoardTask = function(colName, id, payload, res) {
 var findNewerTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.find({'quoterID' : boardObj.quoterID, 'creationDate' : {"$gt" : new Date(payload.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
+			collection.find({'quoterID' : payload.quoterID, 'creationDate' : {"$gt" : new Date(payload.creationDate)}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, items) {
 				console.log("[findNewerTask] Finding newer");
 				if (err) {
 					logger.error(err);
@@ -1520,7 +1520,7 @@ var actions = {	"update" : updateTask,
 			    "followCollection" : followCollectionTask,
 			    "unfollowCollection" : unfollowCollectionTask,
 			    "findLatest" : findLatestTask, 
-			    "findLatestBoard" : findLatestBoardTask, // version 3.0
+			    // "findLatestBoard" : findLatestBoardTask,
 			    "findBoard" : findBoardTask,
 			    "findNewer" : findNewerTask,
 			    "findOlder" : findOlderTask,

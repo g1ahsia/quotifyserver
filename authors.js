@@ -14,3 +14,11 @@ exports.findAll = function(req, res) {
 	Queue.push(dbOperations.performDBOperation("findAll", "authors", null, null, res));
 	Queue.execute();
 };
+
+exports.search = function(req, res) {
+	var name = req.params.name;
+	var regEx = new RegExp("\\b" + name, "i");
+	var num = req.params.num
+	Queue.push(dbOperations.performDBSearch("indexSearch", "authors", {name : regEx}, null, null, parseInt(num), res));
+	Queue.execute();
+};

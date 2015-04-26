@@ -42,8 +42,8 @@ exports.findRecentImagesByQuoterId = function(req, res) {
 };
 
 exports.search = function(req, res) {
-	var name = req.params.name;
-	var regEx = new RegExp("\\b" + name, "i");
+	var query = req.params.query;
+	var regEx = new RegExp("\\b" + query, "i");
 	var num = req.params.num;
 	Queue.push(dbOperations.performDBSearch("indexSearch", "quotes", {$or:[{quote : regEx}, {author : regEx}]}, null, null, parseInt(num), res));
 	Queue.execute();
