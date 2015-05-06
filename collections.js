@@ -67,6 +67,7 @@ exports.addCollection = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("sendNotificationToQuoterFollowers", "notifications", null, notificationObj, null));
+		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, null)); 
 		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the new collection to be inserted to core data
 		Queue.execute();
 	});
@@ -82,12 +83,15 @@ exports.updateCollection = function(req, res) {
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
 		collectionObj["lastModified"] = new Date();
+		Queue.push(dbOperations.performDBOperation("findOne", "collections", id, null, null)); // find the existing collection to remove from the previous category
+		Queue.push(dbOperations.performDBOperation("removeCollectionFromCategory", "collectionCategories", null, null, null)); 
 		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, 
 																						description : collectionObj.description, 
 																						category : collectionObj.category, 
 																						isPublic: collectionObj.isPublic, 
 																						lastModified : collectionObj.lastModified
-																					}}, res));
+																					}}, null));
+		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, res)); 
 		Queue.execute();
 	});
 }
@@ -186,6 +190,10 @@ exports.deleteCollection = function(req, res) {
 	req.on('end', function() {
 		var collectionObj = JSON.parse(requestString);
 		collectionObj["lastModified"] = new Date(); // to be implemented
+		
+		Queue.push(dbOperations.performDBOperation("findOne", "collections", collectionObj._id, null, null)); // find the existing collection to remove from the previous category
+		Queue.push(dbOperations.performDBOperation("removeCollectionFromCategory", "collectionCategories", null, null, null)); 
+		
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromQuotes", "quotes", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromFollowingQuoters", "quoters", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, null));

@@ -121,7 +121,7 @@ db.open(function(err, db) {
 var findOneTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, item) {
+			collection.findOne({'_id' : new BSON.ObjectID(id)}, function(err, item) {
 				console.log("[findOneTask] Finding one " + id + " in " + colName);
 				if (err) {
 					logger.error(err);
@@ -147,6 +147,7 @@ var findOneTask = function(colName, id, payload, res) {
 
 var findOneConditionalTask = function(colName, id, payload, req, res) {
 	return function(callback) {
+		console.log('[findOneConditional ' + colName);
 		db.collection(colName, function(err, collection) {
 			collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, item) {
 				var modifiedSince = req.headers["if-modified-since"];
@@ -168,11 +169,11 @@ var findOneConditionalTask = function(colName, id, payload, req, res) {
 						// Get last modified in version 2 and 3
 						if (!item.lastModified) {
 							lastModified = item.creationDate;
-							console.log("lastModified is null");
+							// console.log("lastModified is null");
 						}
 						else {
 							lastModified = item.lastModified;
-							console.log("lastModified is not null");
+							// console.log("lastModified is not null");
 						} 
 						// Determine what to send in the response depending on date of last modification 
 						if (!modifiedSince)
@@ -191,7 +192,7 @@ var findOneConditionalTask = function(colName, id, payload, req, res) {
 							}
 						}
 					}
-					logger.log('info', 'findOneConditionalTask', {'_id': id});
+					logger.log('info', 'findOneConditionalTask', {'colName' : colName,'_id' : id});
 					callback();
 				}
 			});
@@ -218,24 +219,44 @@ var findAllTask = function(colName, id, payload, res) {
 	};
 }
 
-var findAllByAttrTask = function(colName, id, payload, res) {
+var findByPriorityTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.find(payload).toArray(function(err, items) {
-				console.log("[findAllByAttrTask] Finding one " + id + " in " + colName);
-				logger.info('findAllByAttrTask');
+			collection.find(payload).sort({'priority' : 1}).toArray(function(err, items) {
+				console.log("[findByPriorityTask] Finding records by priority ");
 				if (err) {
 					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
+					results = []; //nullify the results array
+					results.push(items);
 					if (res) res.send(items);
-					logger.info('findAllByAttrTask', items);
 					callback();
 				}
 			});
 		});
 	};
 }
+
+// Obsolete: Replace by findAllTask
+// var findAllByAttrTask = function(colName, id, payload, res) {
+// 	return function(callback) {
+// 		db.collection(colName, function(err, collection) {
+// 			collection.find(payload).toArray(function(err, items) {
+// 				console.log("[findAllByAttrTask] Finding all " + id + " in " + colName);
+// 				logger.info('findAllByAttrTask');
+// 				if (err) {
+// 					logger.error(err);
+// 					if (res) res.send({'error':'An error has occurred'});
+// 				} else {
+// 					if (res) res.send(items);
+// 					logger.info('findAllByAttrTask', items);
+// 					callback();
+// 				}
+// 			});
+// 		});
+// 	};
+// }
 
 var findOneByAttrTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -633,7 +654,8 @@ var updateTask = function(colName, id, payload, res){
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) updated with id ' + id);
-
+					results = [];
+					results.push(result);
 					if (res) res.send(result);
 					callback();
 				}
@@ -807,8 +829,51 @@ var insertQuoterTask = function(colName, id, payload, res){
 	};
 }
 
+var addCollectionToCategoryTask = function(colName, id, payload, res){
+	return function(callback) {
+		var collectionObj = results[0];
+		db.collection(colName, function(err, collection) {
+			console.log('collection is ', collectionObj);
+			collection.update({'name': collectionObj.category}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
+				console.log("[addCollectionToCategoryTask]");
+				if (err) {
+					logger.error(err);
+					console.log('Error updating quoter ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
+					if (res) res.send(collectionObj);
+					callback();
+				}
+			});
+		});
+	};
+}
+
+var removeCollectionFromCategoryTask = function(colName, id, payload, res){
+	return function(callback) {
+		var collectionObj = results[0];
+		console.log('removing ', colName);
+		db.collection(colName, function(err, collection) {
+			collection.update({'name': collectionObj.category}, {$pull : {collections : new BSON.ObjectID(collectionObj._id)}}, {safe:true}, function(err, result) {
+				console.log("[removeCollectionFromCategoryTask]");
+				if (err) {
+					logger.error(err);
+					console.log('Error updating quoter ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
+					if (res) res.send(collectionObj);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var addCollectionToQuoterTask = function(colName, id, payload, res){
 	return function(callback) {
+		console.log('adding');
 		var collectionObj = results.shift();
 		db.collection(colName, function(err, collection) {
 			collection.update({'_id': new BSON.ObjectID(id)}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
@@ -1159,9 +1224,9 @@ var pullCollectionFromQuotesTask = function(colName, id, payload, res) {
 			else {
 				for (var i = 0; i < quoteArray.length; i++) {
 					if (i == quoteArray.length - 1)
-						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, callback));
+						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, collectionObj.lastModified, callback));
 					else
-						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, null));
+						db.collection(colName,  pullCollectionFromQuote(collection, quoteArray[i], id, collectionObj.lastModified, null));
 				}
 			}
 		});
@@ -1169,15 +1234,24 @@ var pullCollectionFromQuotesTask = function(colName, id, payload, res) {
 }
 
 // Helper method: Pull collection ID from quotes.collections table
- var pullCollectionFromQuote = function(collection, qid, cid, callback) {
-	collection.update({'_id': new BSON.ObjectID(qid)}, { $pull : { collections : cid}}, {safe:true}, function(err, result2) {
+ var pullCollectionFromQuote = function(collection, qid, cid, lastModified, callback) {
+	collection.update({'_id': new BSON.ObjectID(qid)}, {$pull : { collections : cid}}, {safe:true}, function(err, result) {
 		if (err) {
 			logger.error(err);
 			console.log('Error updating collections: ' + err);
 			if (res) res.send({'error':'An error has occurred'});
 		} else {
-			console.log('' + result2 + ' document(s) updated with quote id' + qid + " " + cid);
-			if (callback) callback();
+			console.log('' + result + ' document(s) updated with quote id' + qid + " " + cid);
+			// update lastModified for every quote
+			collection.update({'_id': new BSON.ObjectID(qid)}, {$set : {'lastModified' : lastModified}}, {safe:true}, function(err, result2) {
+				if (err) {
+					logger.error(err);
+					console.log('Error updating collections: ' + err);
+				} else {
+					console.log('' + result2 + ' document(s) updated with quote id ', qid);
+					if (callback) callback();
+				}
+			});
 		}
 	});
 }
@@ -1195,7 +1269,7 @@ var pullCollectionFromFollowingQuotersTask = function(colName, id, payload, res)
 					if (i == followedByArray.length - 1)
 						db.collection(colName,  pullCollectionFromFollower(collection, followedByArray[i], collectionObj.ownerID, collectionObj._id, callback));
 					else
-						db.collection(colName,  pullCollectionFromFollower(collection, followedByArray[i], collectionObj, null));
+						db.collection(colName,  pullCollectionFromFollower(collection, followedByArray[i], collectionObj.ownerID, collectionObj._id, null));
 				}
 			}
 		});
@@ -1493,18 +1567,81 @@ var unlinkDeviceTask = function(colName, id, payload, res) {
 	};
 }
 
+var addQuoteToHashtagsTask = function(colName, id, payload, res){
+	return function(callback) {
+		var quoteObj = payload;
+		db.collection(colName, function(err, collection) {
+			console.log("[addQuoteToHastagsTask]");
+			// If there's an existing tag, update the 
+			var tags = payload.tags;
+			// tags.forEach(function (tag) {
+			if (tags.length != 0) {
+				for (var i = 0; i < tags.length; i++) {									
+					db.collection(colName, function(err, collection) {
+						if (i == tags.length - 1)
+							addQuoteToHashtag(collection, tags[i], quoteObj._id, res, callback);
+						else
+							addQuoteToHashtag(collection, tags[i], quoteObj._id, null, null);
+					});
+				}
+			}
+			else {
+				if (res) res.end();
+				if (callback) callback();		
+			}		
+		});
+	};
+}
+
+// Helper for add quote to tag table
+var addQuoteToHashtag = function(collection, tag, quoteID, res, callback) {
+	collection.findOne({'tag' : tag}, function(err, item) {
+		console.log('found item ' + tag);
+		// If tag already exist
+		if (item) {
+			collection.update({'_id': new BSON.ObjectID(item._id)}, {$addToSet : {quotes : quoteID}}, {safe:true}, function(err, result) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(result[0]));
+					if (res) res.send(result[0]);
+					if (callback) callback();
+				}
+			});
+		}
+		// If tag doesn't exist, add the hashtag
+		else {
+			collection.insert({'tag' : tag, quotes : [quoteID], images : [], followedBy : []}, {safe:true}, function(err, result) {
+				if (err) {
+					logger.error(err);
+					console.log('Error inserting tag ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) inserted with ' + JSON.stringify(result[0]));
+					if (res) res.send(result[0]);
+					if (callback) callback();
+				}
+			});
+		}
+	});
+}
+
 var actions = {	"update" : updateTask, 
 				"insert" : insertTask, 
 				"insertQuoter" : insertQuoterTask, 
 				"remove": removeTask, 
 				"findOne" : findOneTask, 
 				"findOneByAttr" : findOneByAttrTask,
-				"findAllByAttr" : findAllByAttrTask,
+				// "findAllByAttr" : findAllByAttrTask,
 				"findAll" : findAllTask,
+				"findByPriority" : findByPriorityTask,
 				"textSearch" : textSearchTask,
 				"indexSearch" : indexSearchTask,
 				"pullCollectionFromQuotes" : pullCollectionFromQuotesTask,
 				"pullCollectionFromFollowingQuoters" : pullCollectionFromFollowingQuotersTask,
+				"addCollectionToCategory" : addCollectionToCategoryTask,
+				"removeCollectionFromCategory" : removeCollectionFromCategoryTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
 				"removeCollectionFromQuoter" : removeCollectionFromQuoterTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
@@ -1534,7 +1671,8 @@ var actions = {	"update" : updateTask,
 			    "sendNotificationToQuoterFollowers" : sendNotificationToQuoterFollowersTask,
 			    "updateNotifications" : updateNotificationsTask,
 			    "addDevice" : addDeviceTask,
-			    "unlinkDevice" : unlinkDeviceTask
+			    "unlinkDevice" : unlinkDeviceTask,
+			    "addQuoteToHashtags" : addQuoteToHashtagsTask
 				};
 
 var results = []; //results of accomplished task

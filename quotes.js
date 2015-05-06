@@ -6,6 +6,7 @@ exports.findById = function(req, res) {
 	var id = req.params.id;
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	// Queue.push(dbOperations.performDBOperation("findOne", "quotes", id, null, res));
+	console.log('triggering findOneConditional');
 	Queue.push(dbOperations.performConditionalSearch("findOneConditional", "quotes", id, null, req, res));
 	Queue.execute();
 };
@@ -88,6 +89,15 @@ exports.addQuote = function(req, res) {
 		notificationObj["event"] = 5;
 		notificationObj["read"] = 0;
 		notificationObj["targetID"] = quoteObj.collections[0]; //to be added with quoteID in an array later
+		// get hashtags
+		var tagslistarr = quoteObj["description"].split(' ');
+		var tags = [];
+		tagslistarr.forEach(function (item) {
+		    if(item.indexOf('#') == 0){
+		      tags.push(item);  
+		    }
+		});
+		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
 		// send push notification to all followers
 		Queue.push(dbOperations.performDBOperation("sendNotificationToCollectionFollowers", "notifications", null, notificationObj, null));
@@ -98,7 +108,9 @@ exports.addQuote = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("addQuoteToAuthor", "authors", null, quoteObj, null));
 		// Add quote to boards of quoters who follow the collection
 		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, res));
+		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, null));
+		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, quoteObj, res));
+
 		// update author and boards last-updated too
 		Queue.execute();
 	});

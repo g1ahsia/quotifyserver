@@ -52,7 +52,7 @@ exports.textSearch = function(req, res) {
 	Queue.execute();
 };
 
-// Add a new collection
+// Add a new quoter
 exports.addQuoter = function(req, res) {
 	var requestString = '';
 	//var collection = req.body;
@@ -78,7 +78,6 @@ exports.addQuoter = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("insertQuoter", "quoters", null, quoterObj, res));
 		Queue.execute();
 	});
-
 }
 
 // Login

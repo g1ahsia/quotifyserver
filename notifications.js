@@ -136,6 +136,10 @@ var sendAPNPushNotification = function(filePath, options, badge, message, payloa
 	    console.log(err); 
 	  }
 	  	console.log('getting token', token.toString());
+	  	if (token.toString() == '') {
+	  		console.log('no token found');
+	  		return;
+	  	}
 	 	var apnConnection = new apn.Connection(options);
 	 	var myDevice = new apn.Device(token.toString());
 	 	var note = new apn.Notification();

@@ -8,7 +8,9 @@ var express = require('express'),
 	  authors = require('./authors'),
 	  images = require('./images'),
 	  devices = require('./devices'),
-	  notifications = require('./notifications') 
+	  notifications = require('./notifications'),
+	  categories = require('./categories'),
+	  tags = require('./tags');
 var app = express();
 
 app.get('/quoters/:id', quoters.findById);
@@ -96,6 +98,12 @@ app.get('/notifications/newer/quoter/:qtid/:date/:num', notifications.findNewerN
 app.get('/notifications/older/quoter/:qtid/:date/:num', notifications.findOlderNotification); 
 app.get('/notifications', notifications.findAll);
 app.put('/notifications/update/:id', notifications.update);
+
+app.get('/tags', tags.findAll);
+app.get('/tags/hashtag/:tag', tags.findByHashtag);
+
+app.get('/categories/collection', categories.findAllCollectionCategories);
+app.get('/categories/image', categories.findAllImageCategories);
 
  
 app.listen(8080);
