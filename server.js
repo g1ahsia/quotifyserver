@@ -100,7 +100,7 @@ app.get('/notifications', notifications.findAll);
 app.put('/notifications/update/:id', notifications.update);
 
 app.get('/tags', tags.findAll);
-app.get('/tags/hashtag/:tag', tags.findByHashtag);
+app.get('/tags/:tag', tags.findByHashtag);
 
 app.get('/categories/collection', categories.findAllCollectionCategories);
 app.get('/categories/image', categories.findAllImageCategories);
