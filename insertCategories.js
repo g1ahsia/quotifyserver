@@ -18,14 +18,30 @@ var logger = new (winston.Logger)({
 	]
 });
 
+// db.open(function(err, db) {
+// 	console.log( "opening connnection to mongodb");
+// 	if(!err) {
+// 		console.log("Connected to database");
+// 		// creating indexes
+// 		db.collection('collectionCategories', function(err, collection) {
+// 			for (var i = 0; i < collectionCategories.length; i++) {									
+// 				insertCategory(collection, collectionCategories[i]);
+// 			}
+// 		});
+// 	}
+// 	else {
+// 		console.log("Failed connecting to database");
+// 	}
+// });
+
 db.open(function(err, db) {
 	console.log( "opening connnection to mongodb");
 	if(!err) {
 		console.log("Connected to database");
 		// creating indexes
-		db.collection('collectionCategories', function(err, collection) {
-			for (var i = 0; i < collectionCategories.length; i++) {									
-				insertCategory(collection, collectionCategories[i]);
+		db.collection('imageCategories', function(err, collection) {
+			for (var i = 0; i < imageCategories.length; i++) {									
+				insertCategory(collection, imageCategories[i]);
 			}
 		});
 	}
@@ -34,8 +50,8 @@ db.open(function(err, db) {
 	}
 });
 
+// Execute only once
 var collectionCategories = [
-	{'name' : 'Featured', 'priority' : 1, 'imageID' : '', 'collections' : []},
 	{'name' : 'Inspirational', 'priority' : 2, 'imageID' : 'Inspirational_ovn9hf', 'collections' : []},
 	{'name' : 'Spiritual', 'priority' : 3, 'imageID' : 'Spiritual_onpihq', 'collections' : []},
 	{'name' : 'Love', 'priority' : 4, 'imageID' : 'Love_lhdiq9', 'collections' : []},
@@ -45,13 +61,27 @@ var collectionCategories = [
 	{'name' : 'Celebrities', 'priority' : 8, 'imageID' : '', 'collections' : []},
 ];
 
-var insertCategory = function(collection, collectionCategory) {
-	console.log('inserting', JSON.stringify(collectionCategory));
-	collection.findOne({'name' : collectionCategory.name}, function(err, item) {
+var imageCategories = [
+	{'name' : 'Art', 'priority' : 1, 'imageID' : 'Art_a7sr84', 'collections' : []},
+	{'name' : 'Texture and Pattern', 'priority' : 2, 'imageID' : 'Texture_and_Pattern_ajwv0o', 'images' : []},
+	{'name' : 'Nature', 'priority' : 3, 'imageID' : 'Nature_tyoxkw', 'images' : []},
+	{'name' : 'Sea and Sky', 'priority' : 4, 'imageID' : 'Sea_and_Sky_apfjfq', 'images' : []},
+	{'name' : 'People', 'priority' : 6, 'imageID' : 'People_zeyunc', 'images' : []},
+	{'name' : 'Flowers', 'priority' : 5, 'imageID' : 'Flowers_plfovh', 'images' : []},
+	{'name' : 'Cities', 'priority' : 7, 'imageID' : 'Cities_ovx9lr', 'images' : []},
+	{'name' : 'Black and White', 'priority' : 8, 'imageID' : 'Black_and_White_z7fmfj', 'images' : []},
+	{'name' : 'Animals', 'priority' : 9, 'imageID' : 'Animals_skzqel', 'images' : []},
+	{'name' : 'Other', 'priority' : 10, 'imageID' : 'Other_ovpnhj', 'images' : []},
+];
+
+// Execute only once
+var insertCategory = function(collection, categories) {
+	console.log('inserting', JSON.stringify(categories));
+	collection.findOne({'name' : categories.name}, function(err, item) {
 		console.log('finding');
 		// If collection already exists
 		if (item) {
-			collection.update({'_id': new BSON.ObjectID(item._id)}, {$set : {'priority' : collectionCategory.priority, 'imageID' : collectionCategory.imageID}}, {safe:true}, function(err, result) {
+			collection.update({'_id': new BSON.ObjectID(item._id)}, {$set : {'priority' : categories.priority, 'imageID' : categories.imageID}}, {safe:true}, function(err, result) {
 				if (err) {
 					logger.error(err);
 				} else {
@@ -61,7 +91,7 @@ var insertCategory = function(collection, collectionCategory) {
 		}
 		// If collection doesn't exist, add the hashtag
 		else {
-			collection.insert(collectionCategory, {safe:true}, function(err, result) {
+			collection.insert(categories, {safe:true}, function(err, result) {
 				if (err) {
 					logger.error(err);
 				} else {
