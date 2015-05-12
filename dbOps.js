@@ -1513,7 +1513,7 @@ var addDeviceTask = function(colName, id, payload, res) {
 			collection.findOne({'deviceID' : payload.deviceID},function(err, item) {
 				// Device already added
 				if (item) {
-					collection.update({'deviceID' : payload.deviceID}, {$set : {'quoterID' : payload.quoterID}}, {safe:true}, function(err, result) {
+					collection.update({'deviceID' : payload.deviceID}, {$set : {'quoterID' : payload.quoterID, 'language' : payload.language}}, {safe:true}, function(err, result) {
 						console.log("[addDeviceTask] Updating device", payload.deviceID, " for ", payload.quoterID);
 						if (err) {
 							logger.error(err);

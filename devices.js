@@ -12,6 +12,7 @@ exports.findAll = function(req, res) {
 exports.addDevice = function(req, res) {
 	var id = req.params.id;
 	var UUID = req.params.UUID;
+	var language = req.params.language;
 	console.log('adding tokenof quoter', id, ' with device uuid ', UUID);
 	var body = '';
 	req.on("data",function(data) {
@@ -25,7 +26,7 @@ exports.addDevice = function(req, res) {
 		var parentFolder = 'devices' + '/' + UUID.substring(32, 34);
 		var childFolder = parentFolder + '/' + UUID.substring(34, 36);
 		var designatedFile = childFolder + '/' + UUID;
-		Queue.push(dbOperations.performDBOperation("addDevice", "devices", null, {'quoterID' : id, 'deviceID' : UUID}, res));
+		Queue.push(dbOperations.performDBOperation("addDevice", "devices", null, {'quoterID' : id, 'deviceID' : UUID, 'language' : language}, res));
 		Queue.execute();
 		// save to folder sample name: devices/e9/f3/545cc31a54573f4d15bee9f3 with sample device id 7DBDB86C-88B9-4257-939E-4798F1AC783F
 		fs.mkdir(parentFolder, function(err) {

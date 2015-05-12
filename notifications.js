@@ -1,6 +1,8 @@
 var apn = require('apn');
 var fs = require('fs');
+var localizedStrings = require('./localizedStrings');
 
+console.log(localizedStrings.notificationMessage[0]['en']);
 /*
 Notification events:
 
@@ -64,34 +66,6 @@ exports.send = function(notificationObj, devices) {
 	if (!notificationObj.quoterID) return;
 	var id = notificationObj.quoterID;
 	var badge = notificationObj.badge;
-	var message;
-	console.log('quoter to be sent is ', notificationObj.quoterID);
-	switch(notificationObj.event) {
-		case 0:
-			message = notificationObj.originatorName + ' liked your quote \"' + notificationObj.targetContent + '\"';
-			break;
-		case 1:
-			message = notificationObj.originatorName + ' requoted your quote \"' + notificationObj.targetContent[0] + '\" to collection \"' + notificationObj.targetContent[1] + '\"';
-			break;
-		case 2:
-			message = notificationObj.originatorName + ' started following you.';
-			break;
-		case 3:
-			message = notificationObj.originatorName + ' started following your collection \"' + notificationObj.targetContent + '\"';
-			break;
-		case 4:
-			message = notificationObj.originatorName + ' commented on your quote \"' + notificationObj.targetContent + '\"';
-			break;
-		case 5:
-			message = notificationObj.originatorName + ' added a new quote \"' + notificationObj.targetContent[0] + '\" in collection \"' + notificationObj.targetContent[1] + '\"';
-			break;
-		case 6:
-			message = notificationObj.originatorName + ' created a new collection \"' + notificationObj.targetContent + '\"';
-			break;
-		case 7:
-			message = notificationObj.originatorName + ' sent you a message \"' + notificationObj.targetContent + '\"';
-			break;
-	}
 	var payload = {'originatorID' : notificationObj.originatorID,
 					'originatorName' : notificationObj.originatorName,
 					'event' : notificationObj.event,
@@ -122,6 +96,34 @@ exports.send = function(notificationObj, devices) {
 		var parentFolder = 'devices' + '/' + device.deviceID.substring(32, 34);
 		var childFolder = parentFolder + '/' + device.deviceID.substring(34, 36);
 		var designatedFile = childFolder + '/' + device.deviceID;
+		var message;
+		switch(notificationObj.event) {
+			case 0: // A liked your quote XYZ
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] +' \"' + notificationObj.targetContent + '\"';
+				break;
+			case 1: // A requoted your quote XYZ to collection ABC
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent[0] + '\" ' + localizedStrings.toCollection + ' \"' + notificationObj.targetContent[1] + '\"';
+				break;
+			case 2: // A started following you
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language];
+				break;
+			case 3: // A started following your collection ABC
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
+				break;
+			case 4: // A commented on your quote XYZ
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
+				break;
+			case 5: // A added a new quote to colletion ABC
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent[0] + '\" ' + localizedStrings.toCollection + ' \"' + notificationObj.targetContent[1] + '\"';
+				break;
+			case 6: // A created a new collection ABC
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
+				break;
+			case 7: // A sent you a message MNO
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
+				break;
+		}
+
 		sendAPNPushNotification(designatedFile, {}, badge, message, payload);
 	});
 }

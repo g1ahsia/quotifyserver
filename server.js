@@ -89,7 +89,7 @@ app.put('/images/:id', images.updateImageTags);
 app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
 app.get('/devices', devices.findAll);
-app.post('/devices/:id/:UUID', devices.addDevice);
+app.post('/devices/:id/:UUID/:language', devices.addDevice);
 app.put('/devices/unlink/:UUID', devices.unlinkDevice);
 
 app.get('/notifications/:id', notifications.findById);
