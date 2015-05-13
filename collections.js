@@ -19,7 +19,8 @@ exports.findAll = function(req, res) {
 exports.findByCategory = function(req, res) {
 	var category = req.params.category;
 	console.log('Retrieving collection by Category: ' + category);
-	Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {category : category}, res));
+	// Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {category : category}, res));
+	Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {$and : [{ $where: "this.quotes.length > 0" }, {category : category}]}, res));
 	Queue.execute();
 };
 

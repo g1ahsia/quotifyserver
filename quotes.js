@@ -58,7 +58,6 @@ exports.textSearch = function(req, res) {
 	Queue.execute();
 };
 
-
 exports.findAll = function(req, res) {
 	console.log("finding all quotes");
 	res.header("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -96,6 +95,10 @@ exports.addQuote = function(req, res) {
 		    if(item.indexOf('#') == 0){
 		      tags.push(item);  
 		    }
+		});
+		require('cld').detect(quoteObj["quote"], function(err, result) {
+			console.log('detected language is' + result["languages"][0]["code"]);
+			quoteObj["detectedLanguage"] = result["languages"][0]["code"];
 		});
 		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));

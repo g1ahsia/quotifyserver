@@ -29,6 +29,6 @@ console.log(lngDetector.detect('日本', 2));
 
 */
 
-require('cld').detect('Ceci est une traduction vers le français', function(err, result) {
+require('cld').detect('lonliness 孤獨', function(err, result) {
   console.log(result);
 });
