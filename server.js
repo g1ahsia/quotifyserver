@@ -10,6 +10,7 @@ var express = require('express'),
 	  devices = require('./devices'),
 	  notifications = require('./notifications'),
 	  categories = require('./categories'),
+	  raws = require('./raws'),
 	  tags = require('./tags');
 var app = express();
 
@@ -105,7 +106,9 @@ app.get('/tags/:tag', tags.findByHashtag);
 app.get('/categories/collection', categories.findAllCollectionCategories);
 app.get('/categories/image', categories.findAllImageCategories);
 
- 
+app.get('/raws', raws.findAll); // for development
+app.get('/raws/textSearch/:query/:num', raws.textSearch);
+
 app.listen(8080);
 console.log('Listening on port 8080...');
 

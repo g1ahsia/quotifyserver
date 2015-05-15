@@ -99,6 +99,9 @@ db.open(function(err, db) {
 
 		});
 
+		db.createIndex('raws', {quote:"text", author:"text", description:"text", source:"text", tags:"text"}, function(err, indexName) {
+			console.log("8. index name: " + indexName);
+		});
 
 		// db.createIndex('quoters', [{"following.ownerID" : 1}, {unique : true}], function(err, indexName) {
 		// 	console.log("8. index name: " + indexName);
