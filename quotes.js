@@ -87,7 +87,7 @@ exports.addQuote = function(req, res) {
 		notificationObj["creationDate"] = new Date();
 		notificationObj["event"] = 5;
 		notificationObj["read"] = 0;
-		notificationObj["targetID"] = quoteObj.collections[0]; //to be added with quoteID in an array later
+		notificationObj["targetID"] = quoteObj.collections[0]; //to be added with quoteID in an array later in sendNotificationToCollectionFollowersTask
 		// get hashtags
 		var tagslistarr = quoteObj["description"].split(' ');
 		var tags = [];

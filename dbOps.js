@@ -441,6 +441,26 @@ var findLatestPopularTask = function(colName, id, payload, res) {
 	};
 }
 
+var findByMonthTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			var a_month_ago = new Date(new Date().getTime() - 30*24*60*60*1000);
+			console.log("a month ago is ", a_month_ago);
+			collection.find({'creationDate' : {"$gte" : a_month_ago}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
+				console.log("[findByMonth]");
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('Successfully found record: ' + JSON.stringify(item));
+					if (res) res.send(item);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 var findRecommendedTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
@@ -1165,10 +1185,10 @@ var addQuoteToBoardsTask = function(colName, id, payload, res){
 					console.log("[addQuoteToBoards]: Adding to " + collectionObj.followedBy[i] + " s board");
 
 					if (i == collectionObj.followedBy.length - 1) {
-						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, callback, res));
+						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, callback));
 					}
 					else {
-						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, null, null));
+						db.collection(colName, insertBoard(collectionObj.followedBy[i], new BSON.ObjectID(quoteObj._id), quoteObj.creationDate, null));
 					}
 				}
 			}
@@ -1178,19 +1198,19 @@ var addQuoteToBoardsTask = function(colName, id, payload, res){
 
 // helper for adding boards of multiple followers
 
-var insertBoard = function(qtid, qid, date, callback, res) {
+var insertBoard = function(qtid, qid, date, callback) {
 		return function(err, boards) {
 			boards.insert({'quoteID' : qid, 'creationDate' : date, 'quoterID' : qtid}, {safe:true}, function(err, result) {
 				console.log("[insertBoard]");
 				if (err) {
 					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
+					// if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) updated with quote id' + qid);
-					if (res) {
-						var quoteObj = results.shift();
-						res.send(quoteObj);
-					} 
+					// if (res) {
+					// 	var quoteObj = results.shift();
+					// 	res.send(quoteObj);
+					// } 
 					if (callback) callback();
 				}
 			});
@@ -1589,7 +1609,10 @@ var addQuoteToHashtagsTask = function(colName, id, payload, res){
 				}
 			}
 			else {
-				if (res) res.end();
+				if (res) {
+					var quoteObj = results.shift();
+					res.send(quoteObj);
+				}
 				if (callback) callback();		
 			}		
 		});
@@ -1608,7 +1631,10 @@ var addQuoteToHashtag = function(collection, tag, quoteID, res, callback) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) updated with ' + JSON.stringify(result[0]));
-					if (res) res.send(result[0]);
+					if (res) {
+						var quoteObj = results.shift();
+						res.send(quoteObj);
+					}
 					if (callback) callback();
 				}
 			});
@@ -1622,7 +1648,10 @@ var addQuoteToHashtag = function(collection, tag, quoteID, res, callback) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) inserted with ' + JSON.stringify(result[0]));
-					if (res) res.send(result[0]);
+					if (res) {
+						var quoteObj = results.shift();
+						res.send(quoteObj);
+					}
 					if (callback) callback();
 				}
 			});
@@ -1665,6 +1694,7 @@ var actions = {	"update" : updateTask,
 			    "findNewer" : findNewerTask,
 			    "findOlder" : findOlderTask,
 			    "findLatestPopular" : findLatestPopularTask,
+			    "findByMonth" : findByMonthTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,
 			    "findRecommended" : findRecommendedTask,

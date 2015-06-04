@@ -74,6 +74,7 @@ app.post('/boards/quoter/:qtid', boards.addQuote);
 app.get('/dailyQuotes/:id', dailyQuotes.findById);
 app.get('/dailyQuotes', dailyQuotes.findAll);
 app.get('/dailyQuotes/latest/:num', dailyQuotes.findLatestPopular);
+app.get('/dailyQuotes/month/:num', dailyQuotes.findByMonth);
 
 app.get('/images/:id', images.findImageById);
 app.get('/images', images.findAll);
