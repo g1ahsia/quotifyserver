@@ -19,6 +19,7 @@ app.get('/quoters/email/:email', quoters.findByEmail);
 app.get('/quoters/search/:name/:num', quoters.search);
 app.get('/quoters/textSearch/:name/:num', quoters.textSearch);
 app.get('/quoters', quoters.findAll);
+app.get('/quoters/randomQuote/:id', quoters.randomQuote);
 app.post('/quoters/login/', quoters.loginQuoter);
 app.post('/quoters', quoters.addQuoter);
 app.put('/quoters/:id', quoters.updateQuoter);
@@ -50,6 +51,7 @@ app.get('/collections/search/:query/:num', collections.search);
 app.get('/collections/textSearch/:query/:num', collections.textSearch);
 app.get('/collections', collections.findAll);
 app.get('/collections/category/:category', collections.findByCategory);
+app.get('/collections/recommend/:num', collections.findRecommended);
 app.post('/collections', collections.addCollection);
 app.put('/collections/:id', collections.updateCollection);
 app.put('/collections/chooseCover/:id', collections.chooseCover);
@@ -91,6 +93,7 @@ app.put('/images/:id', images.updateImageTags);
 app.get('/images/cloudinaryRequest/:publicId', images.cloudinaryRequest);
 
 app.get('/devices', devices.findAll);
+app.get('/devices/quoter/:id', devices.findByQuoterId);
 app.post('/devices/:id/:UUID/:language', devices.addDevice);
 app.put('/devices/unlink/:UUID', devices.unlinkDevice);
 
@@ -106,6 +109,7 @@ app.get('/tags/:tag', tags.findByHashtag);
 
 app.get('/categories/collection', categories.findAllCollectionCategories);
 app.get('/categories/image', categories.findAllImageCategories);
+app.get('/categories/image/name/:name', categories.findImageCategoryByName);
 
 app.get('/raws', raws.findAll); // for development
 app.get('/raws/textSearch/:query/:num', raws.textSearch);

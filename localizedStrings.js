@@ -8,6 +8,7 @@ var message4 = new Object();
 var message5 = new Object();
 var message6 = new Object();
 var message7 = new Object();
+var message8 = new Object();
 
 notificationMessage[0] = message0;
 notificationMessage[1] = message1;
@@ -17,6 +18,7 @@ notificationMessage[4] = message4;
 notificationMessage[5] = message5;
 notificationMessage[6] = message6;
 notificationMessage[7] = message7;
+notificationMessage[8] = message8;
 
 message0['en'] = 'liked your quote';
 message0['zh-Hant'] = '喜歡您的引言';
@@ -41,6 +43,9 @@ message6['zh-Hant'] = '建立了一個新的收藏夾';
 
 message7['en'] = 'sent you a message';
 message7['zh-Hant'] = '留了言給您';
+
+message8['en'] = 'Daily inspiration for you';
+message8['zh-Hant'] = '為您挑選的每日佳言';
 
 var toCollection = new Object();
 

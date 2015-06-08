@@ -372,6 +372,16 @@ var appendQuoterToQuoterArray = function(col, quoter, index, numOfQuoters, res, 
 	});
 }
 
+var appendCollectionToCollectionArray = function(col, collection, index, numOfCollections, res, callback) {
+	col.findOne({'_id' : new BSON.ObjectID(collection._id)}, function(err, item) {
+		results[index] = item;
+		if (results.filter(String).length == numOfCollections) {
+			res.send(results);
+			callback();
+		}
+	});
+}
+
 // find recent images (not generic)
 var findDistinctTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -461,7 +471,7 @@ var findByMonthTask = function(colName, id, payload, res) {
 	};
 }
 
-var findRecommendedTask = function(colName, id, payload, res) {
+var findRecommendedQuotersTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
 			collection.aggregate(
@@ -485,6 +495,44 @@ var findRecommendedTask = function(colName, id, payload, res) {
 							db.collection('quoters', function(err, col) {
 								console.log(quoter._id);
 								appendQuoterToQuoterArray(col, quoter, i, items.length, res, callback);
+								i++;
+							});
+						});
+					}
+					else {
+						res.send(results);
+						callback();
+					}
+				}
+			});
+		});
+	};
+}
+
+var findRecommendedCollectionsTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.aggregate(
+									{$unwind : '$followedBy'}, 
+									{$group : { _id : "$_id", number : { $sum : 1 } } },
+									{$sort : {number : -1}}, 
+									{$limit : parseInt(payload.num)}, function(err, items) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					// console.log('Successfully found record: ' + JSON.stringify(items));
+					// results = []; //nullify the results array
+					// results.push(items);
+					// if (res) res.send(items);
+					// callback();
+					results = [];
+					var i = 0;
+					if (items.length != 0) {
+						items.forEach(function (collection) {
+							db.collection('collections', function(err, col) {
+								console.log(collection._id);
+								appendCollectionToCollectionArray(col, collection, i, items.length, res, callback);
 								i++;
 							});
 						});
@@ -1594,9 +1642,9 @@ var addQuoteToHashtagsTask = function(colName, id, payload, res){
 	return function(callback) {
 		var quoteObj = payload;
 		db.collection(colName, function(err, collection) {
-			console.log("[addQuoteToHastagsTask]");
+			console.log("[addQuoteToHastagsTask]", JSON.stringify(payload));
 			// If there's an existing tag, update the 
-			var tags = payload.tags;
+			var tags = quoteObj.tags;
 			// tags.forEach(function (tag) {
 			if (tags.length != 0) {
 				for (var i = 0; i < tags.length; i++) {									
@@ -1617,6 +1665,40 @@ var addQuoteToHashtagsTask = function(colName, id, payload, res){
 			}		
 		});
 	};
+}
+
+var randomQuoteTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, col) {
+			col.findOne({'_id' : new BSON.ObjectID(id)},function(err, quoter) {
+				var randomQuoter = quoter.following[Math.floor(Math.random()*quoter.following.length)];
+				findRandomQuoteUntilQuoteFound(randomQuoter.collections, res, callback);
+			});
+		});
+	};
+}
+
+// Recursive method to find a random quote in a collection followed by the quoter
+var findRandomQuoteUntilQuoteFound = function(collectionIDs, res, callback) {
+	var randomCollectionID = collectionIDs[Math.floor(Math.random()*collectionIDs.length)];
+	db.collection('collections', function(err, col) {
+		col.findOne({'_id' : new BSON.ObjectID(randomCollectionID)},function(err, collection) {
+			var randomQuoteID = collection.quotes[Math.floor(Math.random()*collection.quotes.length)];
+			if (!randomQuoteID) {
+				// find again
+				findRandomQuoteUntilQuoteFound(collectionIDs, res, callback);
+			}
+			else {
+				// quote found
+				db.collection('quotes', function(err, col2) {
+					col2.findOne({'_id' : new BSON.ObjectID(randomQuoteID)},function(err, quote) {
+						res.send(quote);
+						callback();
+					});
+				});
+			}
+		});
+	});
 }
 
 // Helper for add quote to tag table
@@ -1697,7 +1779,8 @@ var actions = {	"update" : updateTask,
 			    "findByMonth" : findByMonthTask,
 			    "findDistinct" : findDistinctTask,
 			    "getComments" : getCommentsTask,
-			    "findRecommended" : findRecommendedTask,
+			    "findRecommendedQuoters" : findRecommendedQuotersTask,
+			    "findRecommendedCollections" : findRecommendedCollectionsTask,
 			    "findOneConditional" : findOneConditionalTask, // version 3.0
 			    "sendNotification" : sendNotificationTask,
 			    "sendNotificationToCollectionFollowers" : sendNotificationToCollectionFollowersTask,
@@ -1705,7 +1788,8 @@ var actions = {	"update" : updateTask,
 			    "updateNotifications" : updateNotificationsTask,
 			    "addDevice" : addDeviceTask,
 			    "unlinkDevice" : unlinkDeviceTask,
-			    "addQuoteToHashtags" : addQuoteToHashtagsTask
+			    "addQuoteToHashtags" : addQuoteToHashtagsTask,
+			    "randomQuote" : randomQuoteTask
 				};
 
 var results = []; //results of accomplished task

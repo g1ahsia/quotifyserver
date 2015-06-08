@@ -41,6 +41,12 @@ exports.textSearch = function(req, res) {
 	Queue.execute();
 };
 
+exports.findRecommended = function(req, res) {
+	var num = req.params.num;
+	Queue.push(dbOperations.performDBOperation("findRecommendedCollections", "collections", null, {'num' : num}, res));
+	Queue.execute();
+}
+
 
 // Add a new collection 
 exports.addCollection = function(req, res) {

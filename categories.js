@@ -42,3 +42,15 @@ exports.addImageCategory = function(req, res) {
 		Queue.execute();
 	});
 }
+
+exports.findImageCategoryByName = function(req, res) {
+	var requestString = '';
+	req.on("data",function(data){
+		requestString += data.toString('utf8');
+	});
+	req.on('end', function() {	
+		var name = req.params.name;
+		Queue.push(dbOperations.performDBOperation("findOneByAttr", "imageCategories", null, {'name' : name}, res));
+		Queue.execute();
+	});
+}

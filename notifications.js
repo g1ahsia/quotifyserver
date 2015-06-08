@@ -73,24 +73,6 @@ exports.send = function(notificationObj, devices) {
 					'targetID' : notificationObj.targetID,
 					'targetContent' : notificationObj.targetContent
 					};
-	// var parentFolder = 'devices' + '/' + id.substring(20, 22);
-	// var childFolder = parentFolder + '/' + id.substring(22, 24);
-	// var designatedFolder = childFolder + '/' + id;
-	// Find all device tokens associated with the quoter
-
-	// fs.readdir(designatedFolder, function(err, files) {
-		// if (err) {
-		// 	console.log(err);
-		// 	return;
-		// }
-		// files.forEach(function (file) {
-		// 	if (file != '.DS_Store') {
-		// 		var filePath = designatedFolder + '/' + file;
-		// 		console.log('token path is ', filePath);
-		// 		sendAPNPushNotification(filePath, {}, badge, message, payload);
-		// 	}
-		// });
-	// });
 
 	devices.forEach(function (device) {
 		var parentFolder = 'devices' + '/' + device.deviceID.substring(32, 34);
@@ -99,7 +81,7 @@ exports.send = function(notificationObj, devices) {
 		var message;
 		switch(notificationObj.event) {
 			case 0: // A liked your quote XYZ
-				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] +' \"' + notificationObj.targetContent + '\"';
+				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
 			case 1: // A requoted your quote XYZ to collection ABC
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent[0] + '\" ' + localizedStrings.toCollection + ' \"' + notificationObj.targetContent[1] + '\"';
@@ -122,6 +104,8 @@ exports.send = function(notificationObj, devices) {
 			case 7: // A sent you a message MNO
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
+			case 8: // Daily inspiration sent by the system
+				message = localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 		}
 
 		sendAPNPushNotification(designatedFile, {}, badge, message, payload);

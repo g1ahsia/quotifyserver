@@ -26,7 +26,7 @@ exports.findAll = function(req, res) {
 
 exports.findRecommended = function(req, res) {
 	var num = req.params.num;
-	Queue.push(dbOperations.performDBOperation("findRecommended", "quoters", null, {'num' : num}, res));
+	Queue.push(dbOperations.performDBOperation("findRecommendedQuoters", "quoters", null, {'num' : num}, res));
 	Queue.execute();
 }
 
@@ -49,6 +49,12 @@ exports.textSearch = function(req, res) {
 	var name = req.params.name;
 	var num = req.params.num;
 	Queue.push(dbOperations.performDBSearch("textSearch", "quoters", {$text: {$search : name}}, {textScore: {$meta: "textScore"}}, {sort: {textScore: {$meta: "textScore"}}}, parseInt(num), res));
+	Queue.execute();
+};
+
+exports.randomQuote = function(req, res) {
+	var id = req.params.id;
+	Queue.push(dbOperations.performDBSearch("randomQuote", "quoters", id, null, res));
 	Queue.execute();
 };
 

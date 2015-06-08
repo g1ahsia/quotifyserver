@@ -9,6 +9,12 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 };
 
+exports.findByQuoterId = function(req, res) {
+	var id = req.params.id;
+	Queue.push(dbOperations.performDBOperation("findAll", "devices", null, {'quoterID' : id}, res));
+	Queue.execute();
+};
+
 exports.addDevice = function(req, res) {
 	var id = req.params.id;
 	var UUID = req.params.UUID;
