@@ -24,15 +24,16 @@ var nextMorningInMS = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getU
 var timeToNextMorning = nextMorningInMS - nowInMS;
 console.log('time now ', now);
 console.log('time to next morning ', timeToNextMorning);
-var myVar = setTimeout(function () {schedule()}, timeToNextMorning);
+setTimeout(function () {schedule()}, timeToNextMorning);
 
 function schedule() {
-	setInterval(function () {scheduleDailyInspiration()}, 1000 * 10);
+	scheduleDailyInspiration(); // schedule for today
+	setInterval(function () {scheduleDailyInspiration()}, 1000 * 60 * 60 * 24); //schedule for later days
 }
 
 function scheduleDailyInspiration() {
 	db.collection('quoters', function(err, collection) {
-		collection.find(null).toArray(function(err, quoters) {
+		collection.find().toArray(function(err, quoters) {
 			console.log('number of quoters found ', quoters.length);
 			quoters.forEach(function (quoterObj) {
 				var dailyInspirationTime = quoterObj.dailyInspiration;
@@ -61,7 +62,7 @@ var findRandomQuoteUntilQuoteFound = function(quoterObj, collectionIDs, dailyIns
 						var now = new Date();
 						var nowInMS = now.getTime();
 						var targetInMS = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), dailyInspirationTime.substring(0, 2), dailyInspirationTime.substring(3, 5));
-						var timeToUserDailyInspiration = Math.abs(targetInMS - nowInMS);
+						var timeToUserDailyInspiration = targetInMS - nowInMS;
 						console.log('time to fire ', timeToUserDailyInspiration);
 
 						var notificationObj = {};
@@ -74,7 +75,8 @@ var findRandomQuoteUntilQuoteFound = function(quoterObj, collectionIDs, dailyIns
 						notificationObj["originatorName"] = quoterObj.name;
 						notificationObj["read"] = 0;
 
-						setTimeout(function() {sendNotificationToFollower(notificationObj, quoterObj._id.toString())}, timeToUserDailyInspiration);
+						if (timeToUserDailyInspiration > 0)
+							setTimeout(function() {sendNotificationToFollower(notificationObj, quoterObj._id.toString())}, timeToUserDailyInspiration);
 					});
 				});
 			}

@@ -1640,19 +1640,18 @@ var unlinkDeviceTask = function(colName, id, payload, res) {
 
 var addQuoteToHashtagsTask = function(colName, id, payload, res){
 	return function(callback) {
-		var quoteObj = payload;
 		db.collection(colName, function(err, collection) {
-			console.log("[addQuoteToHastagsTask]", JSON.stringify(payload));
+			console.log("[addQuoteToHastagsTask]", payload, JSON.stringify(payload));
 			// If there's an existing tag, update the 
-			var tags = quoteObj.tags;
+			var tags = payload.tags;
 			// tags.forEach(function (tag) {
 			if (tags.length != 0) {
 				for (var i = 0; i < tags.length; i++) {									
 					db.collection(colName, function(err, collection) {
 						if (i == tags.length - 1)
-							addQuoteToHashtag(collection, tags[i], quoteObj._id, res, callback);
+							addQuoteToHashtag(collection, tags[i], payload._id, res, callback);
 						else
-							addQuoteToHashtag(collection, tags[i], quoteObj._id, null, null);
+							addQuoteToHashtag(collection, tags[i], payload._id, null, null);
 					});
 				}
 			}
