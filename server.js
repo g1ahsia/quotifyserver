@@ -21,6 +21,7 @@ app.get('/quoters/textSearch/:name/:num', quoters.textSearch);
 app.get('/quoters', quoters.findAll);
 app.get('/quoters/randomQuote/:id', quoters.randomQuote);
 app.post('/quoters/login/', quoters.loginQuoter);
+app.post('/quoters/verifyPassword/', quoters.verifyPassword);
 app.post('/quoters', quoters.addQuoter);
 app.put('/quoters/:id', quoters.updateQuoter);
 app.put('/quoters/like/:id', quoters.likeQuote);

@@ -924,7 +924,11 @@ var addCollectionToCategoryTask = function(colName, id, payload, res){
 var removeCollectionFromCategoryTask = function(colName, id, payload, res){
 	return function(callback) {
 		var collectionObj = results[0];
-		console.log('removing ', colName);
+		console.log('removing ', JSON.stringify(collectionObj), " from ", colName);
+		// if (!collectionObj) {
+		// 	res.end();
+		// 	return;
+		// }
 		db.collection(colName, function(err, collection) {
 			collection.update({'name': collectionObj.category}, {$pull : {collections : new BSON.ObjectID(collectionObj._id)}}, {safe:true}, function(err, result) {
 				console.log("[removeCollectionFromCategoryTask]");

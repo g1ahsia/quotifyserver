@@ -95,7 +95,8 @@ exports.updateCollection = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("update", "collections", id, {$set: {title : collectionObj.title, 
 																						description : collectionObj.description, 
 																						category : collectionObj.category, 
-																						isPublic: collectionObj.isPublic, 
+																						isPublic : collectionObj.isPublic, 
+																						cover : collectionObj.cover,
 																						lastModified : collectionObj.lastModified
 																					}}, null));
 		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, res)); 
@@ -204,7 +205,8 @@ exports.deleteCollection = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromQuotes", "quotes", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("pullCollectionFromFollowingQuoters", "quoters", collectionObj._id, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("remove", "collections", collectionObj._id, null, null));
-		Queue.push(dbOperations.performDBOperation("removeCollectionFromQuoter", "quoters", collectionObj.ownerID, collectionObj, res));
+		Queue.push(dbOperations.performDBOperation("removeCollectionFromQuoter", "quoters", collectionObj.ownerID, collectionObj, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set : {lastModified : collectionObj.lastModified}}, res));
 
 		Queue.execute();
 	});

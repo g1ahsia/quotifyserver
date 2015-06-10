@@ -101,6 +101,20 @@ exports.loginQuoter = function(req, res) {
 	});
 }
 
+exports.verifyPassword = function(req, res) {
+	var requestString = '';
+	//var collection = req.body;
+	req.on("data",function(data){
+		requestString += data.toString('utf8');
+
+	});
+	req.on('end', function() {
+		var quoterObj = JSON.parse(requestString);
+		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : new RegExp(quoterObj.email, "i"), password : quoterObj.password}, res));
+		Queue.execute();
+	});
+}
+
 // Update an existing collection
 exports.updateQuoter = function(req, res) {
 	var id = req.params.id;
