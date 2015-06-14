@@ -192,8 +192,8 @@ exports.addComment = function(req, res) {
 		notificationObj["originatorName"] = dataObj.originatorName;
 		notificationObj["read"] = 0;
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {comments : commentObj}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set: {"lastModified" : commentObj.lastModified}}, null));
-		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, res));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
+		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set: {"lastModified" : commentObj.lastModified}}, res));
 		Queue.execute();
 	});
 }

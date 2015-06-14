@@ -773,6 +773,40 @@ var followCollectionTask = function(colName, id, collectionObj, res) {
 	};
 }
 
+var followTagTask = function(colName, id, tagObj, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.update({'tag': tagObj.tag}, {$addToSet : {'followedBy' : tagObj.quoterID}}, {safe:true}, function(err, result) {
+				console.log("[followTagTAsk] following ", tagObj.tag, " by ", tagObj.quoterID);
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with id ' + id);
+					callback();
+				}
+			});
+		});
+	};
+}
+
+var unfollowTagTask = function(colName, id, tagObj, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			collection.update({'tag': tagObj.tag}, {$pull : {'followedBy' : tagObj.quoterID}}, {safe:true}, function(err, result) {
+				console.log("[unfollowTagTAsk] following ", tagObj.tag, " by ", tagObj.quoterID);
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with id ' + id);
+					callback();
+				}
+			});
+		});
+	};
+}
+
 // Helper methods for quoter following collection
 var insertToFollowing = function(collection, quoterID, collectionOwnerID, collectionArray, res, callback) {
 	collection.update({'_id': new BSON.ObjectID(quoterID)}, {$addToSet : {'following' : {"ownerID" : collectionOwnerID, "collections" : collectionArray}}}, {safe:true}, function(err, result) {
@@ -1773,6 +1807,8 @@ var actions = {	"update" : updateTask,
 				"followQuoter" : followQuoterTask,
 			    "followCollection" : followCollectionTask,
 			    "unfollowCollection" : unfollowCollectionTask,
+			    "followTag" : followTagTask,
+			    "unfollowTag" : followTagTask,
 			    "findLatest" : findLatestTask, 
 			    // "findLatestBoard" : findLatestBoardTask,
 			    "findBoard" : findBoardTask,
@@ -1792,7 +1828,7 @@ var actions = {	"update" : updateTask,
 			    "addDevice" : addDeviceTask,
 			    "unlinkDevice" : unlinkDeviceTask,
 			    "addQuoteToHashtags" : addQuoteToHashtagsTask,
-			    "randomQuote" : randomQuoteTask
+			    "randomQuote" : randomQuoteTask,
 				};
 
 var results = []; //results of accomplished task

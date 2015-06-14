@@ -107,6 +107,8 @@ app.put('/notifications/update/:id', notifications.update);
 
 app.get('/tags', tags.findAll);
 app.get('/tags/:tag', tags.findByHashtag);
+app.put('/tags/follow/:tag/:id', tags.follow);
+app.put('/tags/unfollow/:tag/:id', tags.unfollow);
 
 app.get('/categories/collection', categories.findAllCollectionCategories);
 app.get('/categories/image', categories.findAllImageCategories);
