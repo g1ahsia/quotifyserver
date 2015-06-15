@@ -97,8 +97,10 @@ exports.addQuote = function(req, res) {
 		    }
 		});
 		require('cld').detect(quoteObj["quote"], function(err, result) {
-			console.log('detected language is' + result["languages"][0]["code"]);
-			quoteObj["detectedLanguage"] = result["languages"][0]["code"];
+			if (result) {
+				console.log('detected language is' + result["languages"][0]["code"]);
+				quoteObj["detectedLanguage"] = result["languages"][0]["code"];
+			}
 		});
 		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
@@ -112,8 +114,7 @@ exports.addQuote = function(req, res) {
 		// Add quote to boards of quoters who follow the collection
 		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, quoteObj, res));
-
+		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, notificationObj, res));
 		// update author and boards last-updated too
 		Queue.execute();
 	});

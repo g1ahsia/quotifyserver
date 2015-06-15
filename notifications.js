@@ -71,7 +71,8 @@ exports.send = function(notificationObj, devices) {
 					'event' : notificationObj.event,
 					'creationDate' : notificationObj.creationDate,
 					'targetID' : notificationObj.targetID,
-					'targetContent' : notificationObj.targetContent
+					'targetContent' : notificationObj.targetContent,
+					'quoterID' : notificationObj.quoterID
 					};
 
 	devices.forEach(function (device) {
