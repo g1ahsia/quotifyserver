@@ -81,9 +81,9 @@ exports.addQuote = function(req, res) {
 		quoteObj["creationDate"] = new Date();
 		quoteObj["lastModified"] = new Date();
 		// notificationObj["quoterID"]  don't know yet
-		// notificationObj["targetContent"]  from device
-		// notificationObj["originatorID"] from device
-		// notificationObj["originatorName"] from device
+		// notificationObj["targetContent"]  from end device
+		// notificationObj["originatorID"] from end device
+		// notificationObj["originatorName"] from end device
 		notificationObj["creationDate"] = new Date();
 		notificationObj["event"] = 5;
 		notificationObj["read"] = 0;
@@ -97,9 +97,12 @@ exports.addQuote = function(req, res) {
 		    }
 		});
 		require('cld').detect(quoteObj["quote"], function(err, result) {
-			console.log('detected language is' + result["languages"][0]["code"]);
-			quoteObj["detectedLanguage"] = result["languages"][0]["code"];
+			if (result) {
+				console.log('detected language is' + result["languages"][0]["code"]);
+				quoteObj["detectedLanguage"] = result["languages"][0]["code"];
+			}
 		});
+		// console.log('quoteObj to add is ', quoteObj);
 		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
 		// send push notification to all followers
@@ -112,7 +115,10 @@ exports.addQuote = function(req, res) {
 		// Add quote to boards of quoters who follow the collection
 		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToBoards", "boards", null, quoteObj, null));
-		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, quoteObj, res));
+		// Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, quoteObj, res));
+
+		// Add quote to the tags table and send the notification to its followers
+		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, notificationObj, res));
 
 		// update author and boards last-updated too
 		Queue.execute();

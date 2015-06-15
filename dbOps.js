@@ -1498,10 +1498,12 @@ var sendNotificationToCollectionFollowersTask = function(colName, id, payload, r
 						if (callback) callback();
 					}
 					else {
+						// Update the notification
+						notificationObj.targetID = [quoteObj._id, collectionID]; // add target ID here 
+						// Send notification to all followers of this collection
 						db.collection('notifications', function(err, collection) {
 							for (var i = 0; i < followedBy.length; i++) {
 								console.log('1. index ', i);
-								notificationObj.targetID = [quoteObj._id, collectionID]; // add target ID here 
 								if (i == followedBy.length - 1)
 									sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
 								else
@@ -1514,6 +1516,12 @@ var sendNotificationToCollectionFollowersTask = function(colName, id, payload, r
 		});
 	};
 }
+
+/*
+Steps:
+1. Find out who the followers of the quoter
+2. Send notification to each of the followers
+*/
 
 var sendNotificationToQuoterFollowersTask = function(colName, id, payload, res) {
 	return function(callback) {
@@ -1551,6 +1559,44 @@ var sendNotificationToQuoterFollowersTask = function(colName, id, payload, res) 
 		});
 	};
 }
+
+var sendNotificationToTagFollowersTask = function(colName, id, payload, res) {
+	return function(callback) {
+		var notificationObj = payload;
+		var collectionObj = results[0];
+		var originatorID = notificationObj.originatorID;
+		db.collection('tags', function(err, collection) {
+			collection.findOne({'_id': new BSON.ObjectID(originatorID)},function(err, item) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} 
+				else {
+					if (!item) return;
+					var followedBy = item.followedBy;
+					// No followers of mine
+					if (followedBy.length == 0) {
+						callback();
+					}
+					// Send notifications to my followers
+					else {
+						db.collection('notifications', function(err, collection) {
+							for (var i = 0; i < followedBy.length; i++) {
+								console.log('1. index ', i);
+								notificationObj.targetID = collectionObj._id; // add target ID here 
+								if (i == followedBy.length - 1)
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+								else
+									sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+							}
+						});
+					}
+				}
+			});
+		});
+	};
+}
+
 
 // Helper method: Pull collection ID from quotes.collections table
 var sendNotificationToFollower = function(collection, notificationObj, quoterID, callback) {
@@ -1679,17 +1725,17 @@ var unlinkDeviceTask = function(colName, id, payload, res) {
 var addQuoteToHashtagsTask = function(colName, id, payload, res){
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			console.log("[addQuoteToHastagsTask]", payload, JSON.stringify(payload));
-			// If there's an existing tag, update the 
-			var tags = payload.tags;
-			// tags.forEach(function (tag) {
+			// If there's an existing tag
+			var quoteObj = results.shift();
+			console.log("[addQuoteToHastagsTask]", JSON.stringify(quoteObj) + JSON.stringify(payload));
+			var tags = quoteObj.tags;
 			if (tags.length != 0) {
 				for (var i = 0; i < tags.length; i++) {									
 					db.collection(colName, function(err, collection) {
 						if (i == tags.length - 1)
-							addQuoteToHashtag(collection, tags[i], payload._id, res, callback);
+							addQuoteToHashtag(collection, tags[i], quoteObj._id, notificationObj, res, callback); 
 						else
-							addQuoteToHashtag(collection, tags[i], payload._id, null, null);
+							addQuoteToHashtag(collection, tags[i], quoteObj._id, notificationObj, null, null);
 					});
 				}
 			}
@@ -1702,6 +1748,66 @@ var addQuoteToHashtagsTask = function(colName, id, payload, res){
 			}		
 		});
 	};
+}
+
+// Helper for add quote to tag table
+var addQuoteToHashtag = function(collection, tag, quoteID, notificationObj, res, callback) {
+	collection.findOne({'tag' : tag}, function(err, item) {
+		var tagObj = item;
+		var followedBy = tagObj.followedBy;
+		console.log('found item ' + tagObj.tag);
+		// If tag already exist
+		if (item) {
+			collection.update({'_id': new BSON.ObjectID(tagObj._id)}, {$addToSet : {quotes : quoteID}}, {safe:true}, function(err, result) {
+				if (err) {
+					logger.error(err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) updated with ' + JSON.stringify(result[0]));
+					if (res) {
+						console.log('[addQuoteToHashtag helper]: ' + quote + ' is added to ' + tag);
+						// Create the notification
+						notificationObj.targetID = quoteID;
+						notificationObj.event = 9; // Tag that you like
+						console.log('sending notification ', JSON.stringify(notificationObj));
+						// Send notification to all followers of this tag, excluding myself
+						db.collection('notifications', function(err, collection) {
+							for (var i = 0; i < followedBy.length; i++) {
+								// Send notification only if the follower is not the one who creates this quote/notification
+								if (notificationObj.originatorID != followedBy[i]) {
+									console.log('sending notification to follower ', followedBy[i]);
+									if (i == followedBy.length - 1)
+										sendNotificationToFollower(collection, notificationObj, followedBy[i], callback);
+									else
+										sendNotificationToFollower(collection, notificationObj, followedBy[i], null);
+								}
+							}
+						});
+						var quoteObj = results.shift();
+						res.send(quoteObj);
+					}
+					// if (callback) callback();
+				}
+			});
+		}
+		// If tag doesn't exist, add the hashtag
+		else {
+			collection.insert({'tag' : tag, quotes : [quoteID], images : [], followedBy : []}, {safe:true}, function(err, result) {
+				if (err) {
+					logger.error(err);
+					console.log('Error inserting tag ' + err);
+					if (res) res.send({'error':'An error has occurred'});
+				} else {
+					console.log('' + result + ' document(s) inserted with ' + JSON.stringify(result[0]));
+					if (res) {
+						var quoteObj = results.shift();
+						res.send(quoteObj);
+					}
+					if (callback) callback();
+				}
+			});
+		}
+	});
 }
 
 var randomQuoteTask = function(colName, id, payload, res) {
@@ -1735,46 +1841,6 @@ var findRandomQuoteUntilQuoteFound = function(collectionIDs, res, callback) {
 				});
 			}
 		});
-	});
-}
-
-// Helper for add quote to tag table
-var addQuoteToHashtag = function(collection, tag, quoteID, res, callback) {
-	collection.findOne({'tag' : tag}, function(err, item) {
-		console.log('found item ' + tag);
-		// If tag already exist
-		if (item) {
-			collection.update({'_id': new BSON.ObjectID(item._id)}, {$addToSet : {quotes : quoteID}}, {safe:true}, function(err, result) {
-				if (err) {
-					logger.error(err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					console.log('' + result + ' document(s) updated with ' + JSON.stringify(result[0]));
-					if (res) {
-						var quoteObj = results.shift();
-						res.send(quoteObj);
-					}
-					if (callback) callback();
-				}
-			});
-		}
-		// If tag doesn't exist, add the hashtag
-		else {
-			collection.insert({'tag' : tag, quotes : [quoteID], images : [], followedBy : []}, {safe:true}, function(err, result) {
-				if (err) {
-					logger.error(err);
-					console.log('Error inserting tag ' + err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					console.log('' + result + ' document(s) inserted with ' + JSON.stringify(result[0]));
-					if (res) {
-						var quoteObj = results.shift();
-						res.send(quoteObj);
-					}
-					if (callback) callback();
-				}
-			});
-		}
 	});
 }
 
