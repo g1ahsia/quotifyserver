@@ -158,3 +158,23 @@ exports.cloudinaryRequest = function(req, res) {
   responseObj["api_key"] = apiKey;
   res.send(responseObj);
 }
+
+var algorithm = 'aes-256-ctr',
+    secretKey = 'qeN128y1Qb4H6BrNgsGvQL3_lsLLY';
+
+
+// exports.encrypt = function(req, res) {
+//   var text = req.params.text;
+//   var cipher = crypto.createCipher(algorithm, secretKey)
+//   var crypted = cipher.update(text,'utf8','hex')
+//   crypted += cipher.final('hex');
+//   res.send(crypted);
+// }
+
+// exports.decrypt = function(req, res) {
+//   var text = req.params.text;
+//   var decipher = crypto.createDecipher(algorithm, secretKey)
+//   var dec = decipher.update(text,'hex','utf8')
+//   dec += decipher.final('utf8');
+//   res.send(dec);
+// }

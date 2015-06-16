@@ -16,6 +16,7 @@ exports.findAll = function(req, res) {
 	Queue.execute();
 }
 
+// Get all the collections of a cetagory might be too big of a set of data
 exports.findByCategory = function(req, res) {
 	var category = req.params.category;
 	console.log('Retrieving collection by Category: ' + category);

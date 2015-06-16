@@ -1,5 +1,6 @@
 var dbOperations = require('./dbOps');
 var Queue = require('./taskQueue.js');
+var encryption = require('./encryption.js');
 
 // Find collection by ID
 exports.findById = function(req, res) {
@@ -81,6 +82,10 @@ exports.addQuoter = function(req, res) {
 		quoterObj["isValid"] = 1;
 		quoterObj["creationDate"] = new Date();
 		quoterObj["lastModified"] = new Date();
+
+		// encrypt the password and save to db
+		var cryptedPassword = encryption.encrypt(quoterObj["password"]);
+		quoterObj["password"] = cryptedPassword;
 		Queue.push(dbOperations.performDBOperation("insertQuoter", "quoters", null, quoterObj, res));
 		Queue.execute();
 	});
@@ -96,6 +101,13 @@ exports.loginQuoter = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
+
+		// encrypt the password and check in db
+		var cryptedPassword = encryption.encrypt(quoterObj["password"]);
+		quoterObj["password"] = cryptedPassword;
+
+		console.log('login for ', new RegExp(quoterObj.email, "i"));
+
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : new RegExp(quoterObj.email, "i"), password : quoterObj.password}, res));
 		Queue.execute();
 	});
@@ -103,14 +115,33 @@ exports.loginQuoter = function(req, res) {
 
 exports.verifyPassword = function(req, res) {
 	var requestString = '';
-	//var collection = req.body;
 	req.on("data",function(data){
 		requestString += data.toString('utf8');
 
 	});
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
+
+		// encrypt the password and check in db
+		var cryptedPassword = encryption.encrypt(quoterObj["password"]);
+		quoterObj["password"] = cryptedPassword;
+
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : new RegExp(quoterObj.email, "i"), password : quoterObj.password}, res));
+		Queue.execute();
+	});
+}
+
+exports.sendPassword = function(req, res) {
+	var requestString = '';
+	req.on("data",function(data){
+		requestString += data.toString('utf8');
+
+	});
+	req.on('end', function() {
+		var quoterObj = JSON.parse(requestString);
+		console.log('sending password for ', new RegExp(quoterObj.email, "i"));
+		Queue.push(dbOperations.performDBOperation("findOneByAttr", "quoters", null, {email : new RegExp(quoterObj.email, "i")}, null));
+		Queue.push(dbOperations.performDBOperation("sendPassword", "quoters", null, null, res));
 		Queue.execute();
 	});
 }
@@ -127,6 +158,12 @@ exports.updateQuoter = function(req, res) {
 	req.on('end', function() {
 		var quoterObj = JSON.parse(requestString);
 		quoterObj["lastModified"] = new Date();
+
+		// encrypt the password and update in db
+		if (quoterObj["password"]) {
+			var cryptedPassword = encryption.encrypt(quoterObj["password"]);
+			quoterObj["password"] = cryptedPassword;
+		}
 		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set:quoterObj}, res));
 		Queue.execute();
 	});

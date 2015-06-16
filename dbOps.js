@@ -1,6 +1,8 @@
 var mongo = require('mongodb');
 var winston = require('winston');
 var notifications = require('./notifications.js');
+var encryption = require('./encryption.js');
+var email = require('./email.js');
 
 var Server = mongo.Server,
 	BSON = mongo.BSONPure,
@@ -277,6 +279,20 @@ var findOneByAttrTask = function(colName, id, payload, res) {
 					callback();
 				}
 			});
+		});
+	};
+}
+
+var sendPasswordTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			var quoterObj = results[0];
+			if (quoterObj) {
+				var decryptedPassword = encryption.decrypt(quoterObj["password"]);
+				email.send(quoterObj.email, quoterObj.name, decryptedPassword, res);
+			}
+			else
+				res.send({"status" : "not found"});
 		});
 	};
 }
@@ -1814,6 +1830,7 @@ var actions = {	"update" : updateTask,
 				"remove": removeTask, 
 				"findOne" : findOneTask, 
 				"findOneByAttr" : findOneByAttrTask,
+				"sendPassword" : sendPasswordTask,
 				// "findAllByAttr" : findAllByAttrTask,
 				"findAll" : findAllTask,
 				"findByPriority" : findByPriorityTask,
