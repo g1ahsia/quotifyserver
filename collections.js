@@ -76,7 +76,7 @@ exports.addCollection = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("sendNotificationToQuoterFollowers", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, null)); 
-		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the new collection to be inserted to core data
+		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the updated quoter to be updated into core data
 		Queue.execute();
 	});
 }

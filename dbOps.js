@@ -1001,7 +1001,8 @@ var addCollectionToQuoterTask = function(colName, id, payload, res){
 		console.log('adding');
 		var collectionObj = results.shift();
 		db.collection(colName, function(err, collection) {
-			collection.update({'_id': new BSON.ObjectID(id)}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
+			// collection.update({'_id': new BSON.ObjectID(id)}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
+			collection.findAndModify({'_id': new BSON.ObjectID(id)}, [['_id',1]], {$addToSet : {collections : collectionObj._id}}, {new:true}, function(err, result) {
 				console.log("[addCollectionToQuoterTask]");
 				if (err) {
 					logger.error(err);
@@ -1009,7 +1010,7 @@ var addCollectionToQuoterTask = function(colName, id, payload, res){
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
-					if (res) res.send(collectionObj);
+					if (res) res.send(result); // returning quoterObj
 					callback();
 				}
 			});
