@@ -290,8 +290,8 @@ exports.followQuoter = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$addToSet : {followedBy : id}}, null));
 		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("followQuoter", "quoters", id, quoterObj, null));
-		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$set : {lastModified : quoterObj.lastModified}}, null));
-		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : quoterObj.lastModified}}, res));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", id, {$set : {lastModified : quoterObj.lastModified}}, null));
+		Queue.push(dbOperations.performDBOperation("update", "quoters", quoterObj._id, {$set : {lastModified : quoterObj.lastModified}}, res)); // return the updated quoter being followed
 		Queue.execute();
 	});
 }
