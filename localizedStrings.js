@@ -1,3 +1,4 @@
+// Notification strings
 
 var notificationMessage = new Object();
 var message0 = new Object();
@@ -57,3 +58,52 @@ console.log(notificationMessage[0]['zh-Hant']);
 
 exports.notificationMessage = notificationMessage;
 exports.toCollection = toCollection;
+
+// Categories
+// var collectionCategories = new Object();
+// var collectionCategory0 = new Object();
+// var collectionCategory1 = new Object();
+// var collectionCategory2 = new Object();
+// var collectionCategory3 = new Object();
+// var collectionCategory4 = new Object();
+// var collectionCategory5 = new Object();
+// var collectionCategory6 = new Object();
+// var collectionCategory7 = new Object();
+// var collectionCategory8 = new Object();
+
+// collectionCategory0['en'] = 'Inspirational';
+// collectionCategory0['zh-Hant'] = '啟發';
+
+// collectionCategory1['en'] = 'Spiritual';
+// collectionCategory1['zh-Hant'] = '靈性';
+
+// collectionCategory2['en'] = 'Love & Compassion';
+// collectionCategory2['zh-Hant'] = '愛與慈悲';
+
+// collectionCategory3['en'] = 'Poetry';
+// collectionCategory3['zh-Hant'] = '詩詞';
+
+// collectionCategory4['en'] = 'Life';
+// collectionCategory4['zh-Hant'] = '生活';
+
+// collectionCategory5['en'] = 'Funny';
+// collectionCategory5['zh-Hant'] = '有趣';
+
+// collectionCategory6['en'] = 'Entrepreneurship';
+// collectionCategory6['zh-Hant'] = '創業精神';
+
+// collectionCategory7['en'] = 'Relationship';
+// collectionCategory7['zh-Hant'] = '人際關係';
+
+// collectionCategory8['en'] = 'Motivational';
+// collectionCategory8['zh-Hant'] = '激發性';
+
+// collectionCategories[0] = collectionCategory0;
+// collectionCategories[1] = collectionCategory1;
+// collectionCategories[2] = collectionCategory2;
+// collectionCategories[3] = collectionCategory3;
+// collectionCategories[4] = collectionCategory4;
+// collectionCategories[5] = collectionCategory5;
+// collectionCategories[6] = collectionCategory6;
+// collectionCategories[7] = collectionCategory7;
+// collectionCategories[8] = collectionCategory8;

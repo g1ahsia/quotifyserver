@@ -91,7 +91,7 @@ db.open(function(err, db) {
 			console.log("8. index name: " + indexName);
 		});
 
-		db.createIndex('images', {tags:"text"}, function(err, indexName) {
+		db.createIndex('images', {description:"text", tags:"text"}, function(err, indexName) {
 			console.log("9. index name: " + indexName);
 
 		});
@@ -236,6 +236,44 @@ var findByPriorityTask = function(colName, id, payload, res) {
 					results = []; //nullify the results array
 					results.push(items);
 					if (res) res.send(items);
+					callback();
+				}
+			});
+		});
+	};
+}
+
+var findCollectionsByCategoryTask = function(colName, id, payload, res) {
+	return function(callback) {
+		db.collection(colName, function(err, collection) { /* sort by ascending order to have the newest collections appended last */
+			collection.find({$and : [{ $where: "this.quotes.length > 0" }, {category : payload.category}]}).limit(parseInt(payload.num)).sort({'creationDate' : 1}).toArray(function(err, items) {
+				results = [];
+				if (items.length != 0) {
+					console.log('collection number is ' + items.length);
+					items.forEach(function (collection) {
+						db.collection('collections', function(err, col) {
+							// console.log(collection._id);
+							var quoteID = collection.quotes[0];
+							console.log('collection ' + collection.title + ' s first quote ' + quoteID);
+							db.collection('quotes', function(err, col2) {
+								col2.findOne({'_id' : new BSON.ObjectID(quoteID)}, function(err, quoteObj) {
+									// console.log('quote ' + quoteObj._id + ' ' +  'language is ' + quoteObj.detectedLanguage + '' + payload.locale.substring(0, 2));
+									if (!quoteObj.detectedLanguage) {
+										appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+									}
+									else if (quoteObj.detectedLanguage.split('_')[0] == payload.locale.split('_')[0]) {
+										insertCollectionToCollectionArray(col, collection, items.length, res, callback);
+									}
+									else {
+										appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+									}
+								});
+							});
+						});
+					});
+				}
+				else {
+					res.send(results);
 					callback();
 				}
 			});
@@ -388,10 +426,24 @@ var appendQuoterToQuoterArray = function(col, quoter, index, numOfQuoters, res, 
 	});
 }
 
-var appendCollectionToCollectionArray = function(col, collection, index, numOfCollections, res, callback) {
+var insertCollectionToCollectionArray = function(col, collection, numOfCollections, res, callback) {
 	col.findOne({'_id' : new BSON.ObjectID(collection._id)}, function(err, item) {
-		results[index] = item;
+		results.splice(0, 0 , item);
+		console.log('inserting at index 0', results.length);
 		if (results.filter(String).length == numOfCollections) {
+			console.log('sending result');
+			res.send(results);
+			callback();
+		}
+	});
+}
+
+var appendCollectionToCollectionArray = function(col, collection, numOfCollections, res, callback) {
+	col.findOne({'_id' : new BSON.ObjectID(collection._id)}, function(err, item) {
+		results.push(item);
+		console.log('appending', results.length);
+		if (results.filter(String).length == numOfCollections) {
+			console.log('sending result');
 			res.send(results);
 			callback();
 		}
@@ -472,7 +524,7 @@ var findByMonthTask = function(colName, id, payload, res) {
 		db.collection(colName, function(err, collection) {
 			var a_month_ago = new Date(new Date().getTime() - 30*24*60*60*1000);
 			console.log("a month ago is ", a_month_ago);
-			collection.find({'creationDate' : {"$gte" : a_month_ago}}).limit(parseInt(payload.num)).sort({'_id' : -1}).toArray(function(err, item) {
+			collection.find({'creationDate' : {"$gte" : a_month_ago}}).limit(parseInt(payload.num)).sort({'popularity' : -1}).toArray(function(err, item) {
 				console.log("[findByMonth]");
 				if (err) {
 					logger.error(err);
@@ -490,10 +542,10 @@ var findByMonthTask = function(colName, id, payload, res) {
 var findRecommendedQuotersTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.aggregate(
+			collection.aggregate(	{$match : {isValid : 1}},
 									{$unwind : '$followedBy'}, 
 									{$group : { _id : "$_id", number : { $sum : 1 } } },
-									{$sort : {number : -1}}, 
+									{$sort : {number : -1}},
 									{$limit : parseInt(payload.num)}, function(err, items) {
 				if (err) {
 					logger.error(err);
@@ -543,13 +595,11 @@ var findRecommendedCollectionsTask = function(colName, id, payload, res) {
 					// if (res) res.send(items);
 					// callback();
 					results = [];
-					var i = 0;
 					if (items.length != 0) {
 						items.forEach(function (collection) {
 							db.collection('collections', function(err, col) {
 								console.log(collection._id);
-								appendCollectionToCollectionArray(col, collection, i, items.length, res, callback);
-								i++;
+								appendCollectionToCollectionArray(col, collection, items.length, res, callback);
 							});
 						});
 					}
@@ -950,26 +1000,27 @@ var insertQuoterTask = function(colName, id, payload, res){
 	};
 }
 
-var addCollectionToCategoryTask = function(colName, id, payload, res){
-	return function(callback) {
-		var collectionObj = results[0];
-		db.collection(colName, function(err, collection) {
-			console.log('collection is ', collectionObj);
-			collection.update({'name': collectionObj.category}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
-				console.log("[addCollectionToCategoryTask]");
-				if (err) {
-					logger.error(err);
-					console.log('Error updating quoter ' + err);
-					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
-					if (res) res.send(collectionObj);
-					callback();
-				}
-			});
-		});
-	};
-}
+// Adding collection to Category collection array
+// var addCollectionToCategoryTask = function(colName, id, payload, res){
+// 	return function(callback) {
+// 		var collectionObj = results[0];
+// 		db.collection(colName, function(err, collection) {
+// 			console.log('collection is ', collectionObj);
+// 			collection.update({'name': collectionObj.category}, {$addToSet : {collections : collectionObj._id}}, {safe:true}, function(err, result) {
+// 				console.log("[addCollectionToCategoryTask]");
+// 				if (err) {
+// 					logger.error(err);
+// 					console.log('Error updating quoter ' + err);
+// 					if (res) res.send({'error':'An error has occurred'});
+// 				} else {
+// 					console.log('' + result + ' document(s) updated with ' + JSON.stringify(collectionObj));
+// 					if (res) res.send(collectionObj);
+// 					callback();
+// 				}
+// 			});
+// 		});
+// 	};
+// }
 
 var removeCollectionFromCategoryTask = function(colName, id, payload, res){
 	return function(callback) {
@@ -1829,17 +1880,18 @@ var actions = {	"update" : updateTask,
 				"insert" : insertTask, 
 				"insertQuoter" : insertQuoterTask, 
 				"remove": removeTask, 
-				"findOne" : findOneTask, 
-				"findOneByAttr" : findOneByAttrTask,
 				"sendPassword" : sendPasswordTask,
 				// "findAllByAttr" : findAllByAttrTask,
+				"findOne" : findOneTask, 
+				"findOneByAttr" : findOneByAttrTask,
 				"findAll" : findAllTask,
 				"findByPriority" : findByPriorityTask,
+				"findCollectionsByCategory" : findCollectionsByCategoryTask,
 				"textSearch" : textSearchTask,
 				"indexSearch" : indexSearchTask,
 				"pullCollectionFromQuotes" : pullCollectionFromQuotesTask,
 				"pullCollectionFromFollowingQuoters" : pullCollectionFromFollowingQuotersTask,
-				"addCollectionToCategory" : addCollectionToCategoryTask,
+				// "addCollectionToCategory" : addCollectionToCategoryTask,
 				"removeCollectionFromCategory" : removeCollectionFromCategoryTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
 				"removeCollectionFromQuoter" : removeCollectionFromQuoterTask,
@@ -1886,7 +1938,7 @@ var results = []; //results of accomplished task
  	// console.log("*************Performed Operation " + action + "*************");
  	var task = actions[action];
  	console.log(task);
- 	if (!task) throw "No such task";
+ 	if (!task) throw "No such task" + action;
  	return task(colName, id, payload, res);
  }
 
@@ -1894,7 +1946,7 @@ var results = []; //results of accomplished task
  	// console.log("*************Performed Operation " + action + "*************");
  	var task = actions[action];
  	console.log(task);
- 	if (!task) throw "No such task";
+ 	if (!task) throw "No such task" + action;
  	return task(colName, id, payload, req, res);
  }
 
@@ -1902,6 +1954,6 @@ var results = []; //results of accomplished task
  	// console.log("*************Performed DB Search " + action + "*************");
  	var task = actions[action];
  	console.log(task);
- 	if (!task) throw "No such task";
+ 	if (!task) throw "No such task" + action;
  	return task(colName, query, output, sort, num, res);
  }

@@ -88,6 +88,7 @@ exports.addQuote = function(req, res) {
 		notificationObj["event"] = 5;
 		notificationObj["read"] = 0;
 		notificationObj["targetID"] = quoteObj.collections[0]; //to be added with quoteID in an array later in sendNotificationToCollectionFollowersTask
+
 		// get hashtags
 		var tagslistarr = quoteObj["description"].split(' ');
 		var tags = [];
@@ -96,11 +97,14 @@ exports.addQuote = function(req, res) {
 		      tags.push(item);  
 		    }
 		});
+		// detect quote language
 		require('cld').detect(quoteObj["quote"], function(err, result) {
 			if (result) {
 				console.log('detected language is' + result["languages"][0]["code"]);
 				quoteObj["detectedLanguage"] = result["languages"][0]["code"];
 			}
+			else 
+				quoteObj["detectedLanguage"] = "";
 		});
 		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("insert", "quotes", null, quoteObj, null));
@@ -128,19 +132,43 @@ exports.updateQuote = function(req, res) {
 	});
 	req.on('end', function() {
 		var quoteObj = JSON.parse(requestString);
+		var notificationObj = quoteObj.notificationObj;
+		delete quoteObj.notificationObj;
+		notificationObj["creationDate"] = new Date();
+		notificationObj["event"] = 5;
+		notificationObj["read"] = 0;
 		quoteObj["lastModified"] = new Date();
-		console.log("originalCollectionID", quoteObj.originalCollectionID);
-		console.log("newCollectionID", quoteObj.newCollectionID);
+		// console.log("originalCollectionID", quoteObj.originalCollectionID);
+		// console.log("newCollectionID", quoteObj.newCollectionID);
+		var tagslistarr = quoteObj["description"].split(' ');
+		var tags = [];
+		tagslistarr.forEach(function (item) {
+		    if(item.indexOf('#') == 0){
+		      tags.push(item);  
+		    }
+		});
+		require('cld').detect(quoteObj["quote"], function(err, result) {
+			if (result) {
+				console.log('detected language is' + result["languages"][0]["code"]);
+				quoteObj["detectedLanguage"] = result["languages"][0]["code"];
+			}
+			else 
+				quoteObj["detectedLanguage"] = "";
+		});
+		quoteObj["tags"] = tags;
 		Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$set:{quote : quoteObj.quote, 
 																				  author : quoteObj.author, 
 																				  description : quoteObj.description, 
 																				  source : quoteObj.source,
 																				  imageID : quoteObj.imageID,
+																				  tags : quoteObj.tags,
+																				  detectedLanguage : quoteObj.detectedLanguage,
 																				  quoteAttributes : quoteObj.quoteAttributes,
 																				  authorAttributes : quoteObj.authorAttributes,
 																				  imageAttributes : quoteObj.imageAttributes,
 																				  lastModified : quoteObj.lastModified
-																				}}, res));
+																				}}, null));
+		Queue.push(dbOperations.performDBOperation("addQuoteToHashtags", "tags", null, notificationObj, res));
 		// Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$pull : {collections : quoteObj.originalCollectionID}}, null));
 		// Queue.push(dbOperations.performDBOperation("update", "quotes", id, {$addToSet : {collections : quoteObj.newCollectionID}}, null));
 		// Queue.push(dbOperations.performDBOperation("pullQuoteFromCollection", "collections", quoteObj.originalCollectionID, quoteObj, null));

@@ -105,6 +105,14 @@ exports.addImage = function(req, res) {
     //var collection = '{"collection":"this is collection 123456","author":"Dada","description":"this is a new desc"}';
     console.log("json to be added:" + imageString);
     var imageObj = JSON.parse(imageString);
+    var tagslistarr = imageObj["description"].split(' ');
+    var tags = [];
+    tagslistarr.forEach(function (item) {
+        if(item.indexOf('#') == 0){
+          tags.push(item);  
+        }
+    });
+    imageObj["tags"] = tags;
     Queue.push(dbOperations.performDBOperation("insert", "images", null, imageObj, res));
     Queue.execute();
   });
@@ -122,7 +130,7 @@ exports.insertImageManually = function(req, res) {
   });
 }
 
-// Update an existing collection
+// Update an existing image
 exports.updateImageTags = function(req, res) {
   var id = req.params.id;
   //var collection = req.body;

@@ -19,9 +19,12 @@ exports.findAll = function(req, res) {
 // Get all the collections of a cetagory might be too big of a set of data
 exports.findByCategory = function(req, res) {
 	var category = req.params.category;
-	console.log('Retrieving collection by Category: ' + category);
+	var locale = req.params.locale;
+	var num = 30;
+	console.log('Retrieving collection by Category: ' + category + " " + locale);
 	// Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {category : category}, res));
-	Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {$and : [{ $where: "this.quotes.length > 0" }, {category : category}]}, res));
+	// Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {$and : [{ $where: "this.quotes.length > 0" }, {category : category}]}, res));
+	Queue.push(dbOperations.performDBOperation("findCollectionsByCategory", "collections", null, {"category" : category, "locale" : locale, 'num' : num}, res));
 	Queue.execute();
 };
 
@@ -75,7 +78,7 @@ exports.addCollection = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("update", "quoters", collectionObj.ownerID, {$set: {"lastModified" : collectionObj.lastModified}}, null));
 		Queue.push(dbOperations.performDBOperation("insert", "collections", null, collectionObj, null));
 		Queue.push(dbOperations.performDBOperation("sendNotificationToQuoterFollowers", "notifications", null, notificationObj, null));
-		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, null)); 
+		// Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, null)); 
 		Queue.push(dbOperations.performDBOperation("addCollectionToQuoter", "quoters", collectionObj.ownerID, null, res)); // return the updated quoter to be updated into core data
 		Queue.execute();
 	});
@@ -99,8 +102,8 @@ exports.updateCollection = function(req, res) {
 																						isPublic : collectionObj.isPublic, 
 																						cover : collectionObj.cover,
 																						lastModified : collectionObj.lastModified
-																					}}, null));
-		Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, res)); 
+																					}}, res));
+		// Queue.push(dbOperations.performDBOperation("addCollectionToCategory", "collectionCategories", null, null, res)); 
 		Queue.execute();
 	});
 }
