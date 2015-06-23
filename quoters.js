@@ -26,7 +26,8 @@ exports.findAll = function(req, res) {
 };
 
 exports.findRecommended = function(req, res) {
-	var num = req.params.num;
+	var id = req.params.id;
+	var num = 15;
 	Queue.push(dbOperations.performDBOperation("findRecommendedQuoters", "quoters", null, {'num' : num}, res));
 	Queue.execute();
 }

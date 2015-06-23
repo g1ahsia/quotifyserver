@@ -19,13 +19,20 @@ exports.findAll = function(req, res) {
 // Get all the collections of a cetagory might be too big of a set of data
 exports.findByCategory = function(req, res) {
 	var category = req.params.category;
+	var language = req.params.language;
 	var locale = req.params.locale;
 	var num = 30;
-	console.log('Retrieving collection by Category: ' + category + " " + locale);
+	console.log('Retrieving collection by Category: ' + category + " " + language + " " + locale);
+
+	if (category.match("#")) {
+
+	}
+	else {
 	// Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {category : category}, res));
 	// Queue.push(dbOperations.performDBOperation("findAll", "collections", null, {$and : [{ $where: "this.quotes.length > 0" }, {category : category}]}, res));
-	Queue.push(dbOperations.performDBOperation("findCollectionsByCategory", "collections", null, {"category" : category, "locale" : locale, 'num' : num}, res));
-	Queue.execute();
+		Queue.push(dbOperations.performDBOperation("findCollectionsByCategory", "collections", null, {"category" : category, "language" : language, 'num' : num}, res));
+		Queue.execute();
+	}
 };
 
 exports.search = function(req, res) {
@@ -46,8 +53,11 @@ exports.textSearch = function(req, res) {
 };
 
 exports.findRecommended = function(req, res) {
-	var num = req.params.num;
-	Queue.push(dbOperations.performDBOperation("findRecommendedCollections", "collections", null, {'num' : num}, res));
+	// var num = req.params.num;
+	var language = req.params.language;
+	var locale = req.params.locale;
+	var num = 30;
+	Queue.push(dbOperations.performDBOperation("findRecommendedCollections", "collections", null, {'language' : language, 'num' : num}, res));
 	Queue.execute();
 }
 

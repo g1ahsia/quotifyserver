@@ -13,8 +13,10 @@ exports.findAll = function(req, res) {
 };
 
 exports.findLatestPopular = function(req, res) {
-	var num = req.params.num;
-	Queue.push(dbOperations.performDBOperation("findLatestPopular", "dailyQuotes", null, {'num' : num}, res));
+	var language = req.params.language;
+	var locale = req.params.locale;
+	var num = 30;
+	Queue.push(dbOperations.performDBOperation("findLatestPopular", "dailyQuotes", null, {'language' : language, 'num' : num}, res));
 	Queue.execute();
 };
 

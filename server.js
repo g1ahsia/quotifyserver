@@ -29,7 +29,7 @@ app.put('/quoters/like/:id', quoters.likeQuote);
 app.put('/quoters/unlike/:id', quoters.unlikeQuote);
 app.put('/quoters/requote/:id', quoters.requoteQuote);
 app.put('/quoters/favorite/:id', quoters.chooseFavorite);
-app.get('/quoters/recommend/:num', quoters.findRecommended);
+app.get('/quoters/recommend/:id', quoters.findRecommended);
 app.put('/quoters/follow/:id', quoters.followQuoter);
 app.put('/quoters/unfollow/:id', quoters.unfollowQuoter);
 app.delete('/quoters/:id', quoters.invalidateQuoter);
@@ -52,8 +52,8 @@ app.get('/collections/:id', collections.findById);
 app.get('/collections/search/:query/:num', collections.search);
 app.get('/collections/textSearch/:query/:num', collections.textSearch);
 app.get('/collections', collections.findAll);
-app.get('/collections/category/locale/:category/:locale', collections.findByCategory);
-app.get('/collections/recommend/:num', collections.findRecommended);
+app.get('/collections/category/locale/:category/:language/:locale', collections.findByCategory);
+app.get('/collections/recommend/:language/:locale', collections.findRecommended);
 app.post('/collections', collections.addCollection);
 app.put('/collections/:id', collections.updateCollection);
 app.put('/collections/chooseCover/:id', collections.chooseCover);
@@ -77,7 +77,7 @@ app.post('/boards/quoter/:qtid', boards.addQuote);
 
 app.get('/dailyQuotes/:id', dailyQuotes.findById);
 app.get('/dailyQuotes', dailyQuotes.findAll);
-app.get('/dailyQuotes/latest/:num', dailyQuotes.findLatestPopular);
+app.get('/dailyQuotes/latest/:language/:locale', dailyQuotes.findLatestPopular);
 app.get('/dailyQuotes/month/:num', dailyQuotes.findByMonth);
 
 app.get('/images/:id', images.findImageById);

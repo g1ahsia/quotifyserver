@@ -257,11 +257,13 @@ var findCollectionsByCategoryTask = function(colName, id, payload, res) {
 							console.log('collection ' + collection.title + ' s first quote ' + quoteID);
 							db.collection('quotes', function(err, col2) {
 								col2.findOne({'_id' : new BSON.ObjectID(quoteID)}, function(err, quoteObj) {
-									// console.log('quote ' + quoteObj._id + ' ' +  'language is ' + quoteObj.detectedLanguage + '' + payload.locale.substring(0, 2));
+									console.log('quote ' + quoteObj._id + ' ' +  'language is ' + quoteObj.detectedLanguage + ' ' + payload.language);
 									if (!quoteObj.detectedLanguage) {
 										appendCollectionToCollectionArray(col, collection, items.length, res, callback);
 									}
-									else if (quoteObj.detectedLanguage.split('_')[0] == payload.locale.split('_')[0]) {
+									// zh-Hans contains zh
+									// zh-Hant contains zh-Hant
+									else if (payload.language.match(quoteObj.detectedLanguage)) {
 										insertCollectionToCollectionArray(col, collection, items.length, res, callback);
 									}
 									else {
@@ -405,11 +407,24 @@ var findLatestTask = function(colName, id, payload, res) {
 // }
 
 // Helper function to add quote to array in order
-var appendQuoteToQuoteArray = function(col, quote, index, numOfQuotes, res, callback) {
+var insertQuoteToQuoteArray = function(col, quote, numOfQuotes, res, callback) {
 	col.findOne({'_id' : new BSON.ObjectID(quote.quoteID)}, function(err, item) {
-		results[index] = item;
-		console.log("appending result at index", index, "length is ", results.filter(String).length);
+		results.splice(0, 0 , item);
+		console.log('inserting at index 0', results.length);
 		if (results.filter(String).length == numOfQuotes) {
+			console.log('sending result');
+			res.send(results);
+			callback();
+		}
+	});
+}
+
+var appendQuoteToQuoteArray = function(col, quote, numOfQuotes, res, callback) {
+	col.findOne({'_id' : new BSON.ObjectID(quote.quoteID)}, function(err, item) {
+		results.push(item);
+		console.log('appending ', quote.quoteID);
+		if (results.filter(String).length == numOfQuotes) {
+			console.log('sending result');
 			res.send(results);
 			callback();
 		}
@@ -441,7 +456,7 @@ var insertCollectionToCollectionArray = function(col, collection, numOfCollectio
 var appendCollectionToCollectionArray = function(col, collection, numOfCollections, res, callback) {
 	col.findOne({'_id' : new BSON.ObjectID(collection._id)}, function(err, item) {
 		results.push(item);
-		console.log('appending', results.length);
+		console.log('appending ', collection._id);
 		if (results.filter(String).length == numOfCollections) {
 			console.log('sending result');
 			res.send(results);
@@ -499,13 +514,24 @@ var findLatestPopularTask = function(colName, id, payload, res) {
 					if (res) res.send({'error':'An error has occurred'});
 				} else {
 					results = [];
-					var i = 0;
 					if (items.length != 0) {
 						items.forEach(function (quote) {
 							db.collection('quotes', function(err, col) {
-								console.log(quote.quoteID);
-								appendQuoteToQuoteArray(col, quote, i, items.length, res, callback);
-								i++;
+								col.findOne({'_id' : new BSON.ObjectID(quote.quoteID)}, function(err, quoteObj) {
+									console.log('finding ' + quoteObj._id);
+									// console.log('quote ' + quoteObj._id + ' ' +  'language is ' + quoteObj.detectedLanguage + ' ' + payload.language);
+									if (!quoteObj.detectedLanguage) {
+										appendQuoteToQuoteArray(col, quote, items.length, res, callback);
+									}
+									// zh-Hans contains zh
+									// zh-Hant contains zh-Hant
+									else if (payload.language.match(quoteObj.detectedLanguage)) {
+										insertQuoteToQuoteArray(col, quote, items.length, res, callback);
+									}
+									else {
+										appendQuoteToQuoteArray(col, quote, items.length, res, callback);
+									}
+								});
 							});
 						});
 					}
@@ -558,6 +584,7 @@ var findRecommendedQuotersTask = function(colName, id, payload, res) {
 					// callback();
 					results = [];
 					var i = 0;
+					console.log('found items ' + JSON.stringify(items));
 					if (items.length != 0) {
 						items.forEach(function (quoter) {
 							db.collection('quoters', function(err, col) {
@@ -580,9 +607,9 @@ var findRecommendedQuotersTask = function(colName, id, payload, res) {
 var findRecommendedCollectionsTask = function(colName, id, payload, res) {
 	return function(callback) {
 		db.collection(colName, function(err, collection) {
-			collection.aggregate(
+			collection.aggregate(	{$match : {quotes: {$not: {$size: 0}}}},
 									{$unwind : '$followedBy'}, 
-									{$group : { _id : "$_id", number : { $sum : 1 } } },
+									{$group : { _id : "$_id", number : { $sum : 1 }, title : { $first: "$$ROOT.title" }, quotes : { $first: "$$ROOT.quotes" } } },
 									{$sort : {number : -1}}, 
 									{$limit : parseInt(payload.num)}, function(err, items) {
 				if (err) {
@@ -598,8 +625,27 @@ var findRecommendedCollectionsTask = function(colName, id, payload, res) {
 					if (items.length != 0) {
 						items.forEach(function (collection) {
 							db.collection('collections', function(err, col) {
-								console.log(collection._id);
-								appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+								console.log("will append ", collection._id);
+								// appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+								console.log('collection ' + collection.title);
+								var quoteID = collection.quotes[0];
+								console.log('first quote ' + quoteID);
+								db.collection('quotes', function(err, col2) {
+									col2.findOne({'_id' : new BSON.ObjectID(quoteID)}, function(err, quoteObj) {
+										// console.log('quote ' + quoteObj._id + ' ' +  'language is ' + quoteObj.detectedLanguage + ' ' + payload.language);
+										if (!quoteObj.detectedLanguage) {
+											appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+										}
+										// zh-Hans contains zh
+										// zh-Hant contains zh-Hant
+										else if (payload.language.match(quoteObj.detectedLanguage)) {
+											insertCollectionToCollectionArray(col, collection, items.length, res, callback);
+										}
+										else {
+											appendCollectionToCollectionArray(col, collection, items.length, res, callback);
+										}
+									});
+								});
 							});
 						});
 					}
