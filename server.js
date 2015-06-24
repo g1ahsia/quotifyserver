@@ -87,7 +87,7 @@ app.get('/images/search/:query/:num', images.search);
 app.get('/images/textSearch/:query/:num', images.textSearch);
 app.get('/images/metadata/:id', images.findById);
 app.post('/images', images.addImage);
-// app.post('/images/insert', images.insertImageManually);
+app.post('/images/insert', images.insertImageManually);
 app.get('/thumbnails/:id', images.findThumbnailById);
 app.get('/avatars/:id', images.findAvatarById);
 app.get('/imageForm', images.imageForm);

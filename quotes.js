@@ -112,6 +112,9 @@ exports.addQuote = function(req, res) {
 		Queue.push(dbOperations.performDBOperation("sendNotificationToCollectionFollowers", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToCollection", "collections", quoteObj.collections[0], null, null));
 		Queue.push(dbOperations.performDBOperation("update", "collections", quoteObj.collections[0], {$set: {"lastModified" : quoteObj.lastModified}}, null));
+		// Add collection cover if it contains only 1 quote
+		Queue.push(dbOperations.performDBOperation("findOne", "collections", quoteObj.collections[0], null, null));
+		Queue.push(dbOperations.performDBOperation("addCollectionCover", "collections", null, {$set: {"cover" : quoteObj.imageID}}, null));
 		// Add quote to the author collection
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "authors", null, {name : quoteObj.author}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToAuthor", "authors", null, quoteObj, null));

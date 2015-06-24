@@ -10,7 +10,7 @@ var crypto = require('crypto');
 // http://localhost:8080/images/:id
 
 exports.imageForm = function(req, res) {
-  res.send('<form name="input" action="http://192.168.1.40:8080/images/insert" method="post">'
+  res.send('<form name="input" action="http://localhost:8080/images/insert" method="post">'
 + 'Choose Category:<br>'
 + '<input type="radio" name="category" value="Art">Art<br>'
 + '<input type="radio" name="category" value="Light and Shadow">Light and Shadow<br>'

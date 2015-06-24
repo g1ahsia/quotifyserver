@@ -93,6 +93,7 @@ exports.addCollection = function(req, res) {
 		Queue.execute();
 	});
 }
+
 // Update an existing collection
 exports.updateCollection = function(req, res) {
 	var id = req.params.id;

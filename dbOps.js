@@ -1115,6 +1115,31 @@ var addCollectionToQuoterTask = function(colName, id, payload, res){
 	};
 }
 
+var addCollectionCoverTask = function(colName, id, payload, res){
+	return function(callback) {
+		db.collection(colName, function(err, collection) {
+			console.log("[addCollectionCoverTask]: Adding collection cover " + JSON.stringify(payload));
+			var collectionObj = results.shift();
+			results = [];
+			if (collectionObj.quotes.length == 1) {
+				// add collection cover
+				collection.update({'_id': new BSON.ObjectID(collectionObj._id)}, payload, {safe:true}, function(err, result) {
+					if (err) {
+						logger.error(err);
+						console.log('Error updating quoter ' + err);
+					} else {
+						console.log('' + result + ' document(s) updated');
+					}
+					callback();
+				});
+			}
+			else {
+				callback();
+			}
+		});
+	};
+}
+
 var removeCollectionFromQuoterTask = function(colName, id, payload, res){
 	return function(callback) {
 		var collectionObj = payload;
@@ -1940,6 +1965,7 @@ var actions = {	"update" : updateTask,
 				// "addCollectionToCategory" : addCollectionToCategoryTask,
 				"removeCollectionFromCategory" : removeCollectionFromCategoryTask,
 				"addCollectionToQuoter" : addCollectionToQuoterTask,
+				"addCollectionCover" : addCollectionCoverTask,
 				"removeCollectionFromQuoter" : removeCollectionFromQuoterTask,
 				"addQuoteToCollection" : addQuoteToCollectionTask,
 				"pullQuoteFromCollection" : pullQuoteFromCollectionTask,
