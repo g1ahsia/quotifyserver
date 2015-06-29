@@ -81,25 +81,25 @@ exports.send = function(notificationObj, devices) {
 		var designatedFile = childFolder + '/' + device.deviceID;
 		var message;
 		switch(notificationObj.event) {
-			case 0: // A liked your quote XYZ
+			case 0: // A liked your quote XYZ vvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
-			case 1: // A requoted your quote XYZ to collection ABC
+			case 1: // A requoted your quote XYZ to collection ABC  vvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent[0] + '\" ' + localizedStrings.toCollection + ' \"' + notificationObj.targetContent[1] + '\"';
 				break;
-			case 2: // A started following you
+			case 2: // A started following you vvvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language];
 				break;
-			case 3: // A started following your collection ABC
+			case 3: // A started following your collection ABC vvvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
-			case 4: // A commented on your quote XYZ
+			case 4: // A commented on your quote XYZ vvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
-			case 5: // A added a new quote to colletion ABC
+			case 5: // A added a new quote to colletion ABC vvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent[0] + '\" ' + localizedStrings.toCollection + ' \"' + notificationObj.targetContent[1] + '\"';
 				break;
-			case 6: // A created a new collection ABC
+			case 6: // A created a new collection ABC vvvv
 				message = notificationObj.originatorName + ' ' + localizedStrings.notificationMessage[notificationObj.event][device.language] + ' \"' + notificationObj.targetContent + '\"';
 				break;
 			case 7: // A sent you a message MNO

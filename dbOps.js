@@ -1375,13 +1375,22 @@ var removeQuoteFromMyBoardTask = function(colName, id, payload, res){
 		var quoteObj = payload;
 		db.collection(colName, function(err, collection) {
 			console.log("[removeQuoteFromMyBoardTask] adding: ", JSON.stringify(quoteObj), colName);
-			collection.remove({'quoterID' : id, 'quoteID' : new BSON.ObjectID(quoteObj._id)}, {safe:true}, function(err, result) {
+			collection.findOne({'quoterID' : id, 'quoteID' : new BSON.ObjectID(quoteObj._id)}, {safe:true}, function(err, boardObj) {
 				if (err) {
-					logger.error(err);
 					if (res) res.send({'error':'An error has occurred'});
-				} else {
-					if (res) res.send(result[0]);
-					if (callback) callback();
+				}
+				else {
+					console.log('found board ', JSON.stringify(boardObj));
+					collection.remove({'_id' : new BSON.ObjectID(boardObj._id)}, {safe:true}, function(err, result) {
+					if (err) {
+						logger.error(err);
+						if (res) res.send({'error':'An error has occurred'});
+					} else {
+						console.log('removed board ', boardObj._id);
+						if (res) res.send(boardObj);
+						if (callback) callback();
+					}
+				});
 				}
 			});
 		});
@@ -1591,20 +1600,26 @@ var sendNotificationTask = function(colName, id, payload, res) {
 						if (res) res.end();
 					}
 					else {
-						collection.find({'quoterID' : notificationObj.quoterID, 'read' : 0}).toArray(function(err, unReads) {		
-							notificationObj['badge'] = unReads.length + 1;
-							collection.insert(notificationObj, {safe:true}, function(err, result) {
-								if (err) {
-									logger.error(err);
-									if (res) res.send({'error':'An error has occurred'});
-								} else {
-									console.log('Successfully add notification: ' + JSON.stringify(result[0]));
-									// notifications.send(notificationObj);
-									sendNotificationToDevices(notificationObj)
-									if (res) res.send(result[0]);
-								}
+						if (notificationObj.quoterID = notificationObj.originatorID) {
+							console.log('No need to send notification to myself');
+							if (res) res.end();
+						}
+						else {
+							collection.find({'quoterID' : notificationObj.quoterID, 'read' : 0}).toArray(function(err, unReads) {		
+								notificationObj['badge'] = unReads.length + 1;
+								collection.insert(notificationObj, {safe:true}, function(err, result) {
+									if (err) {
+										logger.error(err);
+										if (res) res.send({'error':'An error has occurred'});
+									} else {
+										console.log('Successfully add notification: ' + JSON.stringify(result[0]));
+										// notifications.send(notificationObj);
+										sendNotificationToDevices(notificationObj)
+										if (res) res.send(result[0]);
+									}
+								});
 							});
-						});
+						}
 					}
 					callback();
 				}

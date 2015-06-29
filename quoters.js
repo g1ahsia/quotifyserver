@@ -191,8 +191,7 @@ exports.likeQuote = function(req, res) {
 		notificationObj["originatorID"] = id;
 		notificationObj["read"] = 0;
 		// Don't send notification if quoter likes his own quote
-		if (id != quoteObj.quoterID)
-			Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
+		Queue.push(dbOperations.performDBOperation("sendNotification", "notifications", null, notificationObj, null));
 		Queue.push(dbOperations.performDBOperation("findOneByAttr", "dailyQuotes", null, {quoteID : quoteObj._id}, null));
 		Queue.push(dbOperations.performDBOperation("addQuoteToDailyQuote", "dailyQuotes", null, {'_id' : quoteObj._id, 'creationDate' : quoteObj.creationDate, 'point' : 1}, null));
 		Queue.push(dbOperations.performDBOperation("findBoard", "boards", null, {'quoteID' : quoteObj._id, 'quoterID' : id}, null));
